@@ -217,11 +217,11 @@ int main(int argc, char *argv[]) {
 
   	wbTime_start(Copy, "Copying data from the GPU");
   	cudaMemcpy(hostOutputImageData_Inv, deviceOutputImageData_Inv,
-    		   imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost);
+    		       imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost);
   	cudaMemcpy(hostOutputImageData_Gray, deviceOutputImageData_Gray,
-    		   imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost);
+    		       imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost);
   	cudaMemcpy(hostOutputImageData_YUV, deviceOutputImageData_YUV,
-    		   imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost);
+    		       imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost);
   	wbTime_stop(Copy, "Copying data from the GPU");
 
   	wbTime_stop(GPU, "Doing GPU Computation (memory + compute)");
