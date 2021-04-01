@@ -1,7 +1,6 @@
 #include <cuda_runtime.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <wb.h>
-#include "kernel.cu"
 #define NUM_BINS 4096
 
 #define CUDA_CHECK(ans)                                                   \

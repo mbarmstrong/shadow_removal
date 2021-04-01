@@ -1,5 +1,34 @@
+#include <cuda_runtime.h>
+#include <stdlib.h>
+#include <wb.h>
+#define NUM_BINS 256
+
 // kernel 1: takes in the single-channel image and creates a histogram of pixel intensities
-__global__ void create_histogram() {
+__global__ void create_histogram(unsigned int *input, unsigned int *bins,
+                                 unsigned int num_elements) {
+
+	__shared__ unsigned int bins_private[NUM_BINS]; // privatized bins
+	int i = threadIdx.x + blockIdx.x * blockDim.x; // index
+	int stride = blockDim.x * gridDim.x; // total number of threads
+
+	// initialize privatized bins to 0
+	if (threadIdx.x < NUM_BINS) bins_private[threadIdx.x] = 0;
+	__syncthreads();
+
+	// build local histogram
+	while (i < num_elements) {
+		int pos = input[i]; // bin position
+		if (pos >= 0 && pos < NUM_BINS) // boundary condition check
+			atomicAdd(&bins_private[pos], 1); // atomically increment appropriate privatized bin
+		i += stride;
+	}
+	__syncthreads();
+
+	// build global histogram
+	// number of bins > block size -- need multiple bins per thread
+	for (int j = 0; j < num_bins; j += blockDim.x) {
+		atomicAdd(&bins[threadIdx.x + j], bins_private[threadIdx.x + j]);
+	}
 
 }
 
