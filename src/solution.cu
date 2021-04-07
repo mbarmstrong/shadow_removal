@@ -1,6 +1,6 @@
 #include <wb.h>
 #include "globals.h"
-#include "./color_conversion/launch.cu"
+//#include "./color_conversion/launch.cu"
 #include "./otsu_method/launch.cu"
 
 int main(int argc, char *argv[]) {
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   // Since the image is monochromatic, it only contains one channel
   outputImage = wbImage_new(wbImage_getWidth(inputImage), wbImage_getHeight(inputImage), 1);
 
-  launch_color_conversion(inputImage,outputImage);
+  //launch_color_conversion(inputImage,outputImage);
 
   wbSolution(args, outputImage);
 
