@@ -106,7 +106,20 @@ __global__ void calculate_threshold() {
 }
 
 // kernel 6: takes the single-channel input image and threshold and creates a binarized 
-// 			 image based off whether the pixel was less than or greater than the threshold
-__global__ void create_binarized_image() {
+// 			 image based off whether the pixel was less than or greater than the threshold.
+//           image pixels must be in range [0,1]
+__global__ void create_binarized_image(float *inputImage, float *outputImage, float threshold, int width, int height) {
+
+    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
+	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+
+ 	if (col < width && row < height) {	// check boundary condition
+
+		int idx = row * width + col;   	// mapping 2D to 1D coordinate
+        
+        outputImage[idx] = round(inputImage[idx]-threshold+0.5);  //round to 0 or 1 based on thrshold
+    
+    }
+
 
 }
