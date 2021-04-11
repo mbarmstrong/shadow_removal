@@ -11,7 +11,7 @@ static void compute(unsigned char *output, unsigned char *input,
       unsigned int idx = ii * x + jj;
       float r          = input[3 * idx];     // red value for pixel
       float g          = input[3 * idx + 1]; // green value for pixel
-      float b          = input[3 * idx + 2];
+      float b          = input[3 * idx + 2]; // blue value for pixel
       output[idx] = (unsigned char)(0.21f * r + 0.71f * g + 0.07f * b);
     }
   }
@@ -63,15 +63,13 @@ static void write_data(char *file_name, unsigned char *data,
 static void create_dataset(const int datasetNum, const int y,
                            const int x) {
 
-  const char *dir_name =
-      wbDirectory_create(wbPath_join(base_dir, datasetNum));
+  const char *dir_name = wbDirectory_create(wbPath_join(base_dir, datasetNum));
 
   char *input_file_name  = wbPath_join(dir_name, "input.ppm");
   char *output_file_name = wbPath_join(dir_name, "output.pbm");
 
   unsigned char *input_data = generate_data(y, x);
-  unsigned char *output_data =
-      (unsigned char *)calloc(sizeof(unsigned char), y * x * 3);
+  unsigned char *output_data = (unsigned char *)calloc(sizeof(unsigned char), y * x * 3);
 
   compute(output_data, input_data, y, x);
 
@@ -84,9 +82,8 @@ static void create_dataset(const int datasetNum, const int y,
 
 int main() {
 
-  base_dir = wbPath_join(wbDirectory_current(), "TestImages",
-                         "Dataset");
-// can specify any size 
+  base_dir = wbPath_join(wbDirectory_current(), "TestImages", "Dataset");
+  // can specify any size 
   create_dataset(0, 256, 256);
   create_dataset(1, 512, 512);
   create_dataset(2, 512, 256);
