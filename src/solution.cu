@@ -25,13 +25,13 @@ int main(int argc, char *argv[]) {
   imageHeight = wbImage_getHeight(inputImage_RGB);
   
   // color conversion generates three output images: color invariant, grayscale, and YUV
-  outputImage_Inv = wbImage_new(imageWidth, imageHeight, 3);
+  outputImage_Inv = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
   outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1); // grayscale only has one channel
-  outputImage_YUV = wbImage_new(imageWidth, imageHeight, 3);
+  outputImage_YUV = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
 
   launch_color_convert(inputImage_RGB, outputImage_Inv, outputImage_Gray, outputImage_YUV);
 
-  wbSolution(args, outputImage_Inv, outputImage_Gray, outputImage_YUV);
+  // wbSolution(args, outputImage_Inv, outputImage_Gray, outputImage_YUV);
 
   unsigned int* bins;
   bins = (unsigned int *)malloc(NUM_BINS * sizeof(unsigned int));
@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
 
   printf("\n\nBin[0] is %d\n\n",bins[0]);
 
-  // Otsu's method uses grayscale image
-  launch_otsu_method(outputImage_Gray, bins);
+  // Otsu's method uses YUV and grayscale images
+  launch_otsu_method(outputImage_Gray, outputImage_YUV, bins);
 
   wbImage_delete(outputImage_Inv);
   wbImage_delete(outputImage_Gray);

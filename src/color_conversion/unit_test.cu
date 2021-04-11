@@ -5,9 +5,9 @@
 int main(int argc, char *argv[]) {
   
   	wbArg_t args;
-  	int imageChannels;
   	int imageWidth;
   	int imageHeight;
+    int imageSize;
 
   	char *inputImageFile;
 
@@ -34,11 +34,12 @@ int main(int argc, char *argv[]) {
 
   	imageWidth = wbImage_getWidth(inputImage_RGB);
   	imageHeight = wbImage_getHeight(inputImage_RGB);
-  	imageChannels = wbImage_getChannels(inputImage_RGB);
 
-  	outputImage_Inv = wbImage_new(imageWidth, imageHeight, 3);
-  	outputImage_Gray = wbImage_new(imageWidth, imageHeight, 3);
-  	outputImage_YUV = wbImage_new(imageWidth, imageHeight, 3);
+    imageSize = imageWidth * imageHeight;
+
+  	outputImage_Inv = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
+  	outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1);
+  	outputImage_YUV = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
 
   	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
 
@@ -46,19 +47,15 @@ int main(int argc, char *argv[]) {
 
     //@@ Allocate GPU memory here
   	wbTime_start(GPU, "Doing GPU memory allocation");
-  	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB,
-            	imageWidth * imageHeight * imageChannels * sizeof(float)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray,
-            	imageWidth * imageHeight * sizeof(float)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV,
-            	imageWidth * imageHeight * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(float)));
   	wbTime_stop(GPU, "Doing GPU memory allocation");
 
     //@@ Copy memory to the GPU here
   	wbTime_start(Copy, "Copying data to the GPU");
   	CUDA_CHECK(cudaMemcpy(deviceInputImageData_RGB, hostInputImageData_RGB,
-            	imageWidth * imageHeight * imageChannels * sizeof(float),
-            	cudaMemcpyHostToDevice));
+            	imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyHostToDevice));
   	wbTime_stop(Copy, "Copying data to the GPU");
 
   	wbTime_start(Compute, "Doing the computation on the GPU");
@@ -75,11 +72,11 @@ int main(int argc, char *argv[]) {
     //@@ Copy the GPU memory back to the CPU here
   	wbTime_start(Copy, "Copying data from the GPU");
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_Inv, deviceOutputImageData_Inv,
-    		       imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost));
+    		       imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_Gray, deviceOutputImageData_Gray,
-    		       imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost));
+    		       imageSize * 1 * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_YUV, deviceOutputImageData_YUV,
-    		       imageWidth * imageHeight * sizeof(float), cudaMemcpyDeviceToHost));
+    		       imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	wbTime_stop(Copy, "Copying data from the GPU");
 
   	wbTime_stop(GPU, "Doing GPU Computation (memory + compute)");
