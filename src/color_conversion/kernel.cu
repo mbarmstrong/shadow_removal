@@ -1,8 +1,10 @@
+#include "../globals.h"
+
 // rather than having three kernels to do each step individually, 
 // merge them into	a single kernel -- this way we avoid reading input image
 // multiple times by each kernel and increase flops per memory read
 
-__global__ void color_convert(float *rgbImage, float *invImage, float *grayImage, float *yuvImage, int width, int height, int numChannels) {
+__global__ void color_convert(float *rgbImage, float *invImage, float *grayImage, float *yuvImage, int width, int height) {
 	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
 	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
 
@@ -10,9 +12,9 @@ __global__ void color_convert(float *rgbImage, float *invImage, float *grayImage
 		int idx = row * width + col;   	// mapping 2D to 1D coordinate
 
 		// load input RGB values
-		float r = rgbImage[numChannels * idx];      // red component
-        float g = rgbImage[numChannels * idx + 1];  // green component
-        float b = rgbImage[numChannels * idx + 2];  // blue component
+		float r = rgbImage[NUM_CHANNELS * idx];      // red component
+        float g = rgbImage[NUM_CHANNELS * idx + 1];  // green component
+        float b = rgbImage[NUM_CHANNELS * idx + 2];  // blue component
 
         // calculate RGB to color invariant
         float c1 = atan(r / max(g,b));
@@ -20,9 +22,9 @@ __global__ void color_convert(float *rgbImage, float *invImage, float *grayImage
         float c3 = atan(b / max(r,g));
 
         // store new values in output invariant image
-        invImage[numChannels * idx]     = c1;	// FIXME: check indices
-	    invImage[numChannels * idx + 1] = c2;
-	    invImage[numChannels * idx + 2] = c3;
+        invImage[NUM_CHANNELS * idx]     = c1;	// FIXME: check indices
+	    invImage[NUM_CHANNELS * idx + 1] = c2;
+	    invImage[NUM_CHANNELS * idx + 2] = c3;
 
 	    // calculate invariant to grayscale
 	    // based off matlab function rgb2gray
@@ -42,16 +44,16 @@ __global__ void color_convert(float *rgbImage, float *invImage, float *grayImage
 	    // float v = (r * 0.439) 	+ (g * -0.368) 	+ (b * -0.071) 	+ 128.0;  	// red chrominance component
 
 	    // store new values in output YUV image
-	    yuvImage[numChannels * idx]     = y;	// FIXME: check indices
-	    yuvImage[numChannels * idx + 1] = u;
-	    yuvImage[numChannels * idx + 2] = v; 
+	    yuvImage[NUM_CHANNELS * idx]     = y;	// FIXME: check indices
+	    yuvImage[NUM_CHANNELS * idx + 1] = u;
+	    yuvImage[NUM_CHANNELS * idx + 2] = v; 
 
 	}
 }
 
 // individual kernel -- RGB to invariant
 // not used
-__global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int width, int height, int numChannels) {
+__global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int width, int height, int NUM_CHANNELS) {
   
   	// invariant: a feature that remains unchanged when a particular transformation is applied
 	// "Color based object recognition," T. Gevers
@@ -62,23 +64,23 @@ __global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int wid
     if (col < width && row < height) {  // check boundary condition
         int idx = row * width + col;   	// mapping 2D to 1D coordinate
 
-        float r = rgbImage[numChannels * idx];      // red component
-        float g = rgbImage[numChannels * idx + 1];  // green component
-        float b = rgbImage[numChannels * idx + 2];  // blue component
+        float r = rgbImage[NUM_CHANNELS * idx];      // red component
+        float g = rgbImage[NUM_CHANNELS * idx + 1];  // green component
+        float b = rgbImage[NUM_CHANNELS * idx + 2];  // blue component
 
         float c1 = atan(r / max(g,b));
         float c2 = atan(g / max(r,b));
         float c3 = atan(b / max(r,g));
 
-        invImage[numChannels * idx]     = c1;
-	    invImage[numChannels * idx + 1] = c2;
-	    invImage[numChannels * idx + 2] = c3; 
+        invImage[NUM_CHANNELS * idx]     = c1;
+	    invImage[NUM_CHANNELS * idx + 1] = c2;
+	    invImage[NUM_CHANNELS * idx + 2] = c3; 
     }
 }
 
 // individual kernel -- invariant to grayscale
 // not used
-__global__ void convert_invariant_grayscale(float *invImage, float *grayImage, int width, int height, int numChannels) {
+__global__ void convert_invariant_grayscale(float *invImage, float *grayImage, int width, int height, int NUM_CHANNELS) {
   
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
@@ -86,9 +88,9 @@ __global__ void convert_invariant_grayscale(float *invImage, float *grayImage, i
     if (col < width && row < height) {	// check boundary condition
         int idx = row * width + col;  	// mapping 2D to 1D coordinate
 
-        float r = rgbImage[numChannels * idx];      // red component
-        float g = rgbImage[numChannels * idx + 1];  // green component
-        float b = rgbImage[numChannels * idx + 2];  // blue component
+        float r = rgbImage[NUM_CHANNELS * idx];      // red component
+        float g = rgbImage[NUM_CHANNELS * idx + 1];  // green component
+        float b = rgbImage[NUM_CHANNELS * idx + 2];  // blue component
 
         // rescale pixel using rgb values and floating point constants
         // store new pixel value in grayscale image
@@ -98,7 +100,7 @@ __global__ void convert_invariant_grayscale(float *invImage, float *grayImage, i
 
 // individual kernel -- RGB to YUV
 // not used
-__global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int height, int numChannels) {
+__global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int height, int NUM_CHANNELS) {
 
   	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
   	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
@@ -107,9 +109,9 @@ __global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int
 	    int idx = row * width + col;   	// mapping 2D to 1D coordinate
 
 	    // FIXME -- don't need to multiply by num channels since both have 3 channels?
-	    float r = rgbImage[numChannels * idx];      // red component
-	    float g = rgbImage[numChannels * idx + 1];  // green component
-	    float b = rgbImage[numChannels * idx + 2];  // blue component
+	    float r = rgbImage[NUM_CHANNELS * idx];      // red component
+	    float g = rgbImage[NUM_CHANNELS * idx + 1];  // green component
+	    float b = rgbImage[NUM_CHANNELS * idx + 2];  // blue component
 
 	    // Y range = [16,235], Cb range = Cr range = [16,240]
 	    // Y values are conventionally shifted and scaled to the range [16, 235]
@@ -127,8 +129,8 @@ __global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int
 	    u = (r * -0.148) 	+ (g * -0.291)	+ (b * 0.439) 	+ 128.0;  	// blue chrominance component
 	    v = (r * 0.439) 	+ (g * -0.368) 	+ (b * -0.071) 	+ 128.0;  	// red chrominance component
 
-	    yuvImage[numChannels * idx]     = y;
-	    yuvImage[numChannels * idx + 1] = u;
-	    yuvImage[numChannels * idx + 2] = v; 
+	    yuvImage[NUM_CHANNELS * idx]     = y;
+	    yuvImage[NUM_CHANNELS * idx + 1] = u;
+	    yuvImage[NUM_CHANNELS * idx + 2] = v; 
   	}
 }

@@ -3,7 +3,6 @@
 void launch_color_convert(wbImage_t& inputImage_RGB, wbImage_t& outputImage_Inv,
 						wbImage_t& outputImage_Gray, wbImage_t& outputImage_YUV) {
 
-	int imageChannels;
   	int imageWidth;
   	int imageHeight;
   	int imageSize;
@@ -22,9 +21,8 @@ void launch_color_convert(wbImage_t& inputImage_RGB, wbImage_t& outputImage_Inv,
 
   	imageWidth = wbImage_getWidth(inputImage_RGB);
   	imageHeight = wbImage_getHeight(inputImage_RGB);
-  	imageChannels = wbImage_getChannels(inputImage_RGB);
 
-  	imageSize = imageWidth * imageHeight * imageChannels;
+  	imageSize = imageWidth * imageHeight * NUM_CHANNELS;
 
   	//@@ Allocate GPU memory here
   	wbTime_start(GPU, "Allocating GPU memory.");
@@ -47,7 +45,7 @@ void launch_color_convert(wbImage_t& inputImage_RGB, wbImage_t& outputImage_Inv,
   	dim3 blockDim(16, 16, 1);
   	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
   										deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
-  										imageWidth, imageHeight, imageChannels);
+  										imageWidth, imageHeight);
   	CUDA_CHECK(cudaGetLastError());
   	CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -71,7 +69,3 @@ void launch_color_convert(wbImage_t& inputImage_RGB, wbImage_t& outputImage_Inv,
   	wbTime_stop(GPU, "Freeing GPU Memory");
 
 }
-
-//void launch_invariant_grayscale(wbImage_t& inputImage, wbImage_t& outputImage) {}
-
-//...
