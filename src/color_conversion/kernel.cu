@@ -1,6 +1,6 @@
 // rather than having three kernels to do each step individually, 
 // merge them into	a single kernel -- this way we avoid reading input image
-// multiple times by each kernel and increase the flops per memory read
+// multiple times by each kernel and increase flops per memory read
 
 __global__ void color_convert(float *rgbImage, float *invImage, float *grayImage, float *yuvImage, int width, int height, int numChannels) {
 	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
