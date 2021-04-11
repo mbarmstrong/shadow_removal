@@ -49,7 +49,8 @@ __global__ void color_convert(float *rgbImage, float *invImage, float *grayImage
 	}
 }
 
-
+// individual kernel -- RGB to invariant
+// not used
 __global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int width, int height, int numChannels) {
   
   	// invariant: a feature that remains unchanged when a particular transformation is applied
@@ -75,24 +76,28 @@ __global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int wid
     }
 }
 
-// __global__ void convert_invariant_grayscale(float *invImage, float *grayImage, int width, int height, int numChannels) {
+// individual kernel -- invariant to grayscale
+// not used
+__global__ void convert_invariant_grayscale(float *invImage, float *grayImage, int width, int height, int numChannels) {
   
-//     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
-//     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
+    int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
 
-//     if (col < width && row < height) {	// check boundary condition
-//         int idx = row * width + col;  	// mapping 2D to 1D coordinate
+    if (col < width && row < height) {	// check boundary condition
+        int idx = row * width + col;  	// mapping 2D to 1D coordinate
 
-//         float r = rgbImage[numChannels * idx];      // red component
-//         float g = rgbImage[numChannels * idx + 1];  // green component
-//         float b = rgbImage[numChannels * idx + 2];  // blue component
+        float r = rgbImage[numChannels * idx];      // red component
+        float g = rgbImage[numChannels * idx + 1];  // green component
+        float b = rgbImage[numChannels * idx + 2];  // blue component
 
-//         // rescale pixel using rgb values and floating point constants
-//         // store new pixel value in grayscale image
-//         grayImage[idx] = (0.21 * r) + (0.71 * g) + (0.07 * b); 
-//     }
-// }
+        // rescale pixel using rgb values and floating point constants
+        // store new pixel value in grayscale image
+        grayImage[idx] = (0.21 * r) + (0.71 * g) + (0.07 * b); 
+    }
+}
 
+// individual kernel -- RGB to YUV
+// not used
 __global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int height, int numChannels) {
 
   	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index

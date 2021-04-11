@@ -11,10 +11,10 @@ int main(int argc, char *argv[]) {
 
   	char *inputImageFile;
 
-	// wbImage_t inputImage_RGB;
-	// wbImage_t outputImage_Inv;
-	// wbImage_t outputImage_Gray;
-    // wbImage_t outputImage_YUV;
+	wbImage_t inputImage_RGB;
+	wbImage_t outputImage_Inv;
+	wbImage_t outputImage_Gray;
+    wbImage_t outputImage_YUV;
 
   	float *hostInputImageData_RGB;
   	float *hostOutputImageData_Inv;
@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 
   	args = wbArg_read(argc, argv); // parse the input arguments
 
+    // FIXME: generate input image
   	inputImageFile = wbArg_getInputFile(args, 0);
   	inputImage_RGB = wbImport(inputImageFile);
 

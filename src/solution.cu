@@ -1,6 +1,6 @@
 #include <wb.h>
 #include "globals.h"
-//#include "./color_conversion/launch.cu"
+#include "./color_conversion/launch.cu"
 #include "./otsu_method/launch.cu"
 
 int main(int argc, char *argv[]) {
@@ -8,22 +8,25 @@ int main(int argc, char *argv[]) {
   wbArg_t args;
 
   char *inputImageFile;
-
   wbImage_t inputImage_RGB;
   wbImage_t outputImage_Inv;
   wbImage_t outputImage_Gray;
   wbImage_t outputImage_YUV;
 
-  int imageWidth = wbImage_getWidth(inputImage_RGB);
-  int imageHeight = wbImage_getHeight(inputImage_RGB);
+  int imageWidth;
+  int imageHeight;
 
-  args = wbArg_read(argc, argv); /* parse the input arguments */
+  args = wbArg_read(argc, argv); // parse the input arguments
 
   inputImageFile = wbArg_getInputFile(args, 0);
   inputImage_RGB = wbImport(inputImageFile);
+
+  imageWidth = wbImage_getWidth(inputImage_RGB);
+  imageHeight = wbImage_getHeight(inputImage_RGB);
   
+  // color conversion generates three output images: color invariant, grayscale, and YUV
   outputImage_Inv = wbImage_new(imageWidth, imageHeight, 3);
-  outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1); // monochromatic, one channel
+  outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1); // grayscale only has one channel
   outputImage_YUV = wbImage_new(imageWidth, imageHeight, 3);
 
   launch_color_convert(inputImage_RGB, outputImage_Inv, outputImage_Gray, outputImage_YUV);
@@ -36,6 +39,7 @@ int main(int argc, char *argv[]) {
 
   printf("\n\nBin[0] is %d\n\n",bins[0]);
 
+  // Otsu's method uses grayscale image
   launch_otsu_method(outputImage_Gray, bins);
 
   wbImage_delete(outputImage_Inv);
