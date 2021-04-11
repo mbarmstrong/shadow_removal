@@ -1,6 +1,8 @@
 #include "kernel.cu"
 
-void launch_color_convert(wbImage_t& inputImage, wbImage_t& outputImage) {
+void launch_color_convert(wbImage_t& inputImage_RGB, wbImage_t& outputImage_Inv,
+						wbImage_t& outputImage_Gray, wbImage_t& outputImage_YUV) {
+
 	int imageChannels;
   	int imageWidth;
   	int imageHeight;
@@ -16,13 +18,13 @@ void launch_color_convert(wbImage_t& inputImage, wbImage_t& outputImage) {
   	float *deviceOutputImageData_Gray;
   	float *deviceOutputImageData_YUV;
 
-  	hostInputImageData_RGB = wbImage_getData(inputImage);
+  	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
 
-  	imageWidth = wbImage_getWidth(inputImage);
-  	imageHeight = wbImage_getHeight(inputImage);
-  	imageChannels = wbImage_getChannels(inputImage);
+  	imageWidth = wbImage_getWidth(inputImage_RGB);
+  	imageHeight = wbImage_getHeight(inputImage_RGB);
+  	imageChannels = wbImage_getChannels(inputImage_RGB);
 
-  	imageSize = imageWidth * imageHeight;
+  	imageSize = imageWidth * imageHeight * imageChannels;
 
   	//@@ Allocate GPU memory here
   	wbTime_start(GPU, "Allocating GPU memory.");
@@ -40,12 +42,14 @@ void launch_color_convert(wbImage_t& inputImage, wbImage_t& outputImage) {
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  	// Launch kernel
-  	// dim3 blockDim(512), gridDim(30);
-  	// histogram_shared_kernel<<<gridDim, blockDim,num_bins * sizeof(unsigned int)>>>(
-  	//       input, bins, num_elements, num_bins);
-  	// CUDA_CHECK(cudaGetLastError());
-  	// CUDA_CHECK(cudaDeviceSynchronize());
+  	// launch kernel
+  	dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
+  	dim3 blockDim(16, 16, 1);
+  	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
+  										deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
+  										imageWidth, imageHeight, imageChannels);
+  	CUDA_CHECK(cudaGetLastError());
+  	CUDA_CHECK(cudaDeviceSynchronize());
 
   	//@@ Copy the GPU memory back to the CPU here
   	wbTime_start(Copy, "Copying output memory to the CPU");
