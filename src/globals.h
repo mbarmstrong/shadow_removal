@@ -1,8 +1,8 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#define NUM_BINS 256
 #define NUM_CHANNELS 3
+#define NUM_BINS 256
 
 #define wbCheck(stmt)                                                     \
   do {                                                                    \
