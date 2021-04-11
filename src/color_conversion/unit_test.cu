@@ -40,9 +40,9 @@ int main(int argc, char *argv[]) {
   	outputImage_YUV = wbImage_new(imageWidth, imageHeight, 3);
 
   	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
-  	hostOutputImageData_Inv = wbImage_getData(outputImage_Inv);
-  	hostOutputImageData_Gray = wbImage_getData(outputImage_Gray);
-  	hostOutputImageData_YUV = wbImage_getData(outputImage_YUV);
+  	// hostOutputImageData_Inv = wbImage_getData(outputImage_Inv);
+  	// hostOutputImageData_Gray = wbImage_getData(outputImage_Gray);
+  	// hostOutputImageData_YUV = wbImage_getData(outputImage_YUV);
 
   	wbTime_start(GPU, "Doing GPU Computation (memory + compute)");
 
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   	dim3 myBlock(16, 16, 1);
 
   	// launch kernel
-  	//color_convert<<<myGrid, myBlock>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
+  	// color_convert<<<myGrid, myBlock>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
   	//								   deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
   	//								   imageWidth, imageHeight, imageChannels);
 	// convert_rgb_invariant<<<myGrid, myBlock>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, imageWidth, imageHeight, imageChannels);
