@@ -8,3 +8,6 @@ add_lab_solution("OtsuUnitTest" ${CMAKE_CURRENT_LIST_DIR}/otsu_method/unit_test.
 
 add_lab("ColorConvertUnitTest")
 add_lab_solution("ColorConvertUnitTest" ${CMAKE_CURRENT_LIST_DIR}/color_conversion/unit_test.cu)
+
+add_lab("ConvUnitTest")
+add_lab_solution("ConvUnitTest" ${CMAKE_CURRENT_LIST_DIR}/convolution/unit_test.cu)

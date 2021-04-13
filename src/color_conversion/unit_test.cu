@@ -35,6 +35,10 @@ int main(int argc, char *argv[]) {
   	imageWidth = wbImage_getWidth(inputImage_RGB);
   	imageHeight = wbImage_getHeight(inputImage_RGB);
 
+    printf("\nRunning color convert unit test on image of %dx%d with %d channels\n\n",
+             imageWidth, imageHeight, NUM_CHANNELS);
+
+
     imageSize = imageWidth * imageHeight;
 
   	outputImage_Inv = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
@@ -42,12 +46,16 @@ int main(int argc, char *argv[]) {
   	outputImage_YUV = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
 
   	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
+    hostOutputImageData_Inv = wbImage_getData(outputImage_Inv);
+  	hostOutputImageData_Gray = wbImage_getData(outputImage_Gray);
+  	hostOutputImageData_YUV = wbImage_getData(outputImage_YUV);
 
   	wbTime_start(GPU, "Doing GPU Computation (memory + compute)");
 
     //@@ Allocate GPU memory here
   	wbTime_start(GPU, "Doing GPU memory allocation");
   	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(float)));
+	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Inv, imageSize * NUM_CHANNELS * sizeof(float)));
   	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(float)));
   	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(float)));
   	wbTime_stop(GPU, "Doing GPU memory allocation");
@@ -64,9 +72,10 @@ int main(int argc, char *argv[]) {
   	dim3 blockDim(16, 16, 1);
 
   	// launch kernel
-  	// color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
-  	//								       deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
-  	//								       imageWidth, imageHeight, imageChannels);
+  	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
+  									       deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
+  									       imageWidth, imageHeight);
+
   	wbTime_stop(Compute, "Doing the computation on the GPU");
 
     //@@ Copy the GPU memory back to the CPU here
@@ -82,6 +91,12 @@ int main(int argc, char *argv[]) {
   	wbTime_stop(GPU, "Doing GPU Computation (memory + compute)");
 
   	// wbSolution(args, outputImage_Inv, outputImage_Gray, outputImage_YUV);
+
+    printf("\n");
+	printf("First 3 values of gray image:  %.4f, %.4f, %.4f\n", hostOutputImageData_Gray[0],hostOutputImageData_Gray[1],hostOutputImageData_Gray[2]);
+	printf("First 3 values of inv image:   %.4f, %.4f, %.4f\n", hostOutputImageData_Inv[0],hostOutputImageData_Inv[1],hostOutputImageData_Inv[2]);
+	printf("First 3 values of yuv image:   %.4f, %.4f, %.4f\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
+    printf("\n");
 
     //@@ Free the GPU memory here
     wbTime_start(GPU, "Freeing GPU Memory");
