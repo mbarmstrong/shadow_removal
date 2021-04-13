@@ -94,5 +94,8 @@ int main() {
   create_dataset(7, 1920, 1124);
   create_dataset(8, 1020, 1024);
   create_dataset(9, 3020, 124);
+
+  //Create mini image to test our solution is working
+  create_dataset(99, 4, 4);
   return 0;
 }
