@@ -42,8 +42,11 @@ Here is Coale's .bashrc file. Your equivalent .bashrc is located in your $HOME d
     `$ source .bashrc`
 1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied.
 
+
 ```
 # .bashrc
+
+#Coale's .bashrc
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
