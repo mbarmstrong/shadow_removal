@@ -61,6 +61,7 @@ bind '"\e[A":history-search-backward'
 bind '"\e[B":history-search-forward'
 
 alias bd="cd /home/u29/cjcoopr/ece569/build_dir"
+
 function isesh {
 
     echo "reqesting session for $1 min"
