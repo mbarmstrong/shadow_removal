@@ -12,19 +12,19 @@ int main(int argc, char *argv[]) {
   	char *inputImageFile;
 
 	wbImage_t inputImage_RGB;
-	wbImage_t outputImage_Inv;
-	wbImage_t outputImage_Gray;
-    wbImage_t outputImage_YUV;
+	//wbImage_t outputImage_Inv;
+	//wbImage_t outputImage_Gray;
+    //wbImage_t outputImage_YUV;
 
   	float *hostInputImageData_RGB;
   	float *hostOutputImageData_Inv;
-  	float *hostOutputImageData_Gray;
-  	float *hostOutputImageData_YUV;
+  	unsigned char *hostOutputImageData_Gray;
+  	unsigned char *hostOutputImageData_YUV;
 
   	float *deviceInputImageData_RGB;
   	float *deviceOutputImageData_Inv;
-  	float *deviceOutputImageData_Gray;
-  	float *deviceOutputImageData_YUV;
+  	unsigned char *deviceOutputImageData_Gray;
+  	unsigned char *deviceOutputImageData_YUV;
 
   	args = wbArg_read(argc, argv); // parse the input arguments
 
@@ -41,14 +41,15 @@ int main(int argc, char *argv[]) {
 
     imageSize = imageWidth * imageHeight;
 
-  	outputImage_Inv = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
-  	outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1);
-  	outputImage_YUV = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
+  	//outputImage_Inv = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
+  	//outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1);
+  	//outputImage_YUV = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
 
   	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
-    hostOutputImageData_Inv = wbImage_getData(outputImage_Inv);
-  	hostOutputImageData_Gray = wbImage_getData(outputImage_Gray);
-  	hostOutputImageData_YUV = wbImage_getData(outputImage_YUV);
+
+    hostOutputImageData_Inv =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));  //wbImage_getData(outputImage_Inv);
+  	hostOutputImageData_Gray = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char)); //wbImage_getData(outputImage_Gray);
+  	hostOutputImageData_YUV =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char)); //wbImage_getData(outputImage_YUV);
 
   	wbTime_start(GPU, "Doing GPU Computation (memory + compute)");
 
@@ -56,8 +57,8 @@ int main(int argc, char *argv[]) {
   	wbTime_start(GPU, "Doing GPU memory allocation");
   	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(float)));
 	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Inv, imageSize * NUM_CHANNELS * sizeof(float)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(float)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(unsigned char)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(unsigned char)));
   	wbTime_stop(GPU, "Doing GPU memory allocation");
 
     //@@ Copy memory to the GPU here
@@ -83,9 +84,9 @@ int main(int argc, char *argv[]) {
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_Inv, deviceOutputImageData_Inv,
     		       imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_Gray, deviceOutputImageData_Gray,
-    		       imageSize * 1 * sizeof(float), cudaMemcpyDeviceToHost));
+    		       imageSize * 1 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_YUV, deviceOutputImageData_YUV,
-    		       imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
+    		       imageSize * NUM_CHANNELS * sizeof(unsigned char), cudaMemcpyDeviceToHost));
   	wbTime_stop(Copy, "Copying data from the GPU");
 
   	wbTime_stop(GPU, "Doing GPU Computation (memory + compute)");
@@ -93,9 +94,9 @@ int main(int argc, char *argv[]) {
   	// wbSolution(args, outputImage_Inv, outputImage_Gray, outputImage_YUV);
 
     printf("\n");
-	printf("First 3 values of gray image:  %.4f, %.4f, %.4f\n", hostOutputImageData_Gray[0],hostOutputImageData_Gray[1],hostOutputImageData_Gray[2]);
 	printf("First 3 values of inv image:   %.4f, %.4f, %.4f\n", hostOutputImageData_Inv[0],hostOutputImageData_Inv[1],hostOutputImageData_Inv[2]);
-	printf("First 3 values of yuv image:   %.4f, %.4f, %.4f\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
+	printf("First 3 values of gray image:   %4d,  %4d,  %4d\n", hostOutputImageData_Gray[0],hostOutputImageData_Gray[1],hostOutputImageData_Gray[2]);
+	printf("First 3 values of yuv image:    %4d,  %4d,  %4d\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
     printf("\n");
 
     //@@ Free the GPU memory here
@@ -106,10 +107,14 @@ int main(int argc, char *argv[]) {
   	CUDA_CHECK(cudaFree(deviceOutputImageData_YUV));
     wbTime_stop(GPU, "Freeing GPU Memory");
 
-  	wbImage_delete(outputImage_Inv);
-  	wbImage_delete(outputImage_Gray);
-  	wbImage_delete(outputImage_YUV);
   	wbImage_delete(inputImage_RGB);
+
+	free(hostOutputImageData_Inv);
+	free(hostOutputImageData_Gray);
+	free(hostOutputImageData_YUV);
+  	//wbImage_delete(outputImage_Inv);
+  	//wbImage_delete(outputImage_Gray);
+  	//wbImage_delete(outputImage_YUV);
 
   	return 0;
 }
