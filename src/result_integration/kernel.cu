@@ -1,5 +1,5 @@
 // Kernel 1: Finding average channel values in shadow/light areas for every channel
-__global__ void multiple_rgbImage_byMask(float *rgbImage, float *greyShadowMask, 
+__global__ void multiply_rgbImage_byMask(float *rgbImage, float *greyShadowMask, 
   float *greyLightMask, float *redShadowArray,float *greenShadowArray,float *blueShadowArray,
   float *redLightArray,float *greenLightArray,float *blueLightArray,int width, int height, int numChannels) {
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
@@ -26,7 +26,7 @@ __global__ void multiple_rgbImage_byMask(float *rgbImage, float *greyShadowMask,
   
   // Kernel 2: Sums up the light arrays, shadow array and the eroded array - Without reduction
   __global__ void sum_up_arrays(float *redShadowArray,float *greenShadowArray,float *blueShadowArray,
-    float *redLightArray,float *greenLightArray,float *blueLightArray,float *erodedShadowArray,float *erodedLightArray
+    float *redLightArray,float *greenLightArray,float *blueLightArray,float *erodedShadowMask,float *erodedLightMask
     int width, int height,
     float redSumShadowArray, float greenSumShadowArray,float blueSumShadowArray,
     float redSumLightArray, float greenSumLightArray,float blueSumLightArray,
@@ -44,8 +44,8 @@ __global__ void multiple_rgbImage_byMask(float *rgbImage, float *greyShadowMask,
         greenSumLightArray += greenLightArray[idx];
         blueSumLightArray += blueLightArray[idx];
 
-        erodedSumShadowArray += erodedShadowArray[idx];
-        erodedSumLightArray += erodedLightArray[idx];
+        erodedSumShadowArray += erodedShadowMask[idx];
+        erodedSumLightArray += erodedLightMask[idx];
     }
   }
  // Kernel 2: Array Reduction Kernel - 1D array
