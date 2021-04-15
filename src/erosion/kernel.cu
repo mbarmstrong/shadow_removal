@@ -33,18 +33,6 @@ __global__ void image_erode(unsigned char* inImage, float* outImage_light, float
         // outImage_light[]
     }
 
-    unsigned int start_i = max(y - radio, 0);
-    unsigned int end_i = min(height - 1, y + radio);
-    unsigned int start_j = max(x - radio, 0);
-    unsigned int end_j = min(width - 1, x + radio);
-    int value = 255;
-    for (int i = start_i; i <= end_i; i++) {
-        for (int j = start_j; j <= end_j; j++) {
-            value = min(value, src[i * width + j]);
-        }
-    }
-    dst[y * width + x] = value;
-
     // based on MATLAB imerode function
     // strel = [1 1 1 1 1; 1 1 1 1 1; 1 1 1 1 1; 1 1 1 1 1; 1 1 1 1 1];
     // eroded_gray_shadow_mask = imerode(gray_mask, strel);
