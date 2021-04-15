@@ -11,9 +11,9 @@ int main(int argc, char *argv[]) {
 
   	char *inputImageFile;
 
-	wbImage_t inputImage_RGB;
-	//wbImage_t outputImage_Inv;
-	//wbImage_t outputImage_Gray;
+  	wbImage_t inputImage_RGB;
+  	//wbImage_t outputImage_Inv;
+  	//wbImage_t outputImage_Gray;
     //wbImage_t outputImage_YUV;
 
   	float *hostInputImageData_RGB;
@@ -94,9 +94,9 @@ int main(int argc, char *argv[]) {
   	// wbSolution(args, outputImage_Inv, outputImage_Gray, outputImage_YUV);
 
     printf("\n");
-	printf("First 3 values of inv image:   %.4f, %.4f, %.4f\n", hostOutputImageData_Inv[0],hostOutputImageData_Inv[1],hostOutputImageData_Inv[2]);
-	printf("First 3 values of gray image:   %4d,  %4d,  %4d\n", hostOutputImageData_Gray[0],hostOutputImageData_Gray[1],hostOutputImageData_Gray[2]);
-	printf("First 3 values of yuv image:    %4d,  %4d,  %4d\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
+  	printf("First 3 values of inv image:   %.4f, %.4f, %.4f\n", hostOutputImageData_Inv[0],hostOutputImageData_Inv[1],hostOutputImageData_Inv[2]);
+  	printf("First 3 values of gray image:   %4d,  %4d,  %4d\n", hostOutputImageData_Gray[0],hostOutputImageData_Gray[1],hostOutputImageData_Gray[2]);
+  	printf("First 3 values of yuv image:    %4d,  %4d,  %4d\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
     printf("\n");
 
     //@@ Free the GPU memory here
@@ -109,9 +109,9 @@ int main(int argc, char *argv[]) {
 
   	wbImage_delete(inputImage_RGB);
 
-	free(hostOutputImageData_Inv);
-	free(hostOutputImageData_Gray);
-	free(hostOutputImageData_YUV);
+  	free(hostOutputImageData_Inv);
+  	free(hostOutputImageData_Gray);
+  	free(hostOutputImageData_YUV);
   	//wbImage_delete(outputImage_Inv);
   	//wbImage_delete(outputImage_Gray);
   	//wbImage_delete(outputImage_YUV);

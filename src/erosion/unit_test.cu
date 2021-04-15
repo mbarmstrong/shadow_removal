@@ -4,16 +4,24 @@
 
 int main(void) {
 
+  int imageWidth;
+  int imageHeight;
+  int imageSize;
+
   unsigned char *hostInputImage;
-  unsigned char *deviceInputImage;
   float *hostOutputImage;
+
+  unsigned char *deviceInputImage;
   float *deviceOutputImage;
+
   float *hostMask;
   float *deviceMask;
+
   int maskWidth = 1;
   int imageHeight = 2;
   int imageWidth = 2;
-  int imageSize = imageHeight*imageWidth;
+
+  imageSize = imageHeight * imageWidth;
 
   hostInputImage = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   hostOutputImage = (float *)malloc(imageSize * sizeof(float));
