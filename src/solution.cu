@@ -55,6 +55,14 @@ int main(int argc, char *argv[]) {
   // Otsu's method uses YUV and grayscale images
   //launch_otsu_method(outputImage_Gray, outputImage_YUV, bins);
 
+
+  //--------------------------------------------------
+  //  Execute Result Integration method
+  //
+  //--------------------------------------------------
+  // Result Integration uses original image, gray shadow,gray Light, Eroded shadow, eroded light and smooth mask
+  //launch_result_integration();
+
   wbImage_delete(inputImage_RGB);
 
   free(invImage);

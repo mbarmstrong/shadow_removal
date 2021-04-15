@@ -1,9 +1,13 @@
-#include <cv.h>
+
+#include <wb.h>
 #include "kernel.cu"
+#include "../globals.h"
 
+int main(void) {
 
-void launch_result_integration( float *rgbImage, float *greyShadowMask, 
-  float *greyLightMask, float *erodedShadowMask,float *erodedLightMask, float *smoothMask) {
+  float *rgbImage;
+  float *greyShadowMask;
+  float *greyLightMask; 
   float *redShadowArray;
   float *greenShadowArray;
   float *blueShadowArray;
@@ -11,7 +15,7 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   float *greenLightArray;
   float *blueLightArray;
   float *erodedShadowMask;
-  float *erodedLightMask; 
+  float *erodedLightMask;
   float *redSumShadowArray;
   float *greenSumShadowArray;
   float *blueSumShadowArray;
@@ -19,7 +23,8 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   float *greenSumLightArray;
   float *blueSumLightArray;
   float *erodedSumShadowArray;
-  float *erodedSumLightArray;
+  float *erodedSumShadowArray;
+  float *smoothMask;
   float *finalImage;
   float *deviceRgbImage;
   float *deviceGreyShadowMask;
@@ -30,8 +35,8 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   float *deviceRedLightArray;
   float *deviceGreenLightArray;
   float *deviceBlueLightArray;
-  float *deviceErodedShadowMask;
-  float *deviceErodedLightMask;
+  float *deviceerodedShadowMask;
+  float *deviceerodedLightMask;
   float *deviceRedSumShadowArray;
   float *deviceGreenSumShadowArray;
   float *deviceBlueSumShadowArray;
@@ -45,11 +50,12 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   int redRatio;
   int greenRatio;
   int blueRatio;
-  int imageChannels;
   int imageWidth = 2;
   int imageHeight = 2;
   int imageSize = imageHeight*imageWidth;
- 
+
+  rgbImage  = wbImage_getData(image);
+  
   imageWidth  = wbImage_getWidth(image);
   imageHeight = wbImage_getHeight(image);
 
@@ -94,6 +100,41 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
+  printf("\n\n\n redShadowArray :\t");
+  for(int i = 0; i < imageSize; i++){
+    printf("%.5f, ", redShadowArray[i]); 
+  }
+  printf("\n\n");
+
+  printf("\n\n\n greenShadowArray :\t");
+  for(int i = 0; i < imageSize; i++){
+    printf("%.5f, ", greenShadowArray[i]); 
+  }
+  printf("\n\n");
+
+  printf("\n\n\n blueShadowArray :\t");
+  for(int i = 0; i < imageSize; i++){
+    printf("%.5f, ", blueShadowArray[i]); 
+  }
+  printf("\n\n");
+
+  printf("\n\n\n redLightArray :\t");
+  for(int i = 0; i < imageSize; i++){
+    printf("%.5f, ", redLightArray[i]); 
+  }
+  printf("\n\n");
+
+  printf("\n\n\n greenLightArray :\t");
+  for(int i = 0; i < imageSize; i++){
+    printf("%.5f, ", greenLightArray[i]); 
+  }
+  printf("\n\n");
+
+  printf("\n\n\n blueLightArray :\t");
+  for(int i = 0; i < imageSize; i++){
+    printf("%.5f, ", blueLightArray[i]); 
+  }
+  printf("\n\n");
 
   // Launch sum_up_arrays kernel on the light and shadow arrays for each channel
   {
@@ -145,7 +186,7 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   {
     dim3 blockDim1(8,8), gridDim1(1,1);
     sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-      deviceErodedShadowMask,deviceErodedSumShadowArray, int imageWidth, int imageHeight);
+      deviceerodedShadowMask,deviceErodedSumShadowArray, int imageWidth, int imageHeight);
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   } 
@@ -153,7 +194,7 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   {
     dim3 blockDim1(8,8), gridDim1(1,1);
     sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-      deviceErodedLightMask,deviceErodedSumLightArray, int imageWidth, int imageHeight);
+      deviceerodedLightMask,deviceErodedSumLightArray, int imageWidth, int imageHeight);
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   } 
@@ -187,6 +228,37 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
+  printf("\n\n\n redSumShadowArray :\t");
+  printf("%.5f, ", redSumShadowArray); 
+  printf("\n\n");
+
+  printf("\n\n\n greenSumShadowArray :\t");
+  printf("%.5f, ", greenSumShadowArray); 
+  printf("\n\n");
+
+  printf("\n\n\n blueSumShadowArray :\t");
+  printf("%.5f, ", blueSumShadowArray); 
+  printf("\n\n");
+
+  printf("\n\n\n redSumLightArray :\t");
+  printf("%.5f, ", redSumLightArray); 
+  printf("\n\n");
+
+  printf("\n\n\n greenSumLightArray :\t");
+  printf("%.5f, ", greenSumLightArray); 
+  printf("\n\n");
+
+  printf("\n\n\n blueSumLightArray :\t");
+  printf("%.5f, ", blueSumLightArray); 
+  printf("\n\n");
+
+  printf("\n\n\n erodedSumShadowArray :\t");
+  printf("%.5f, ", erodedSumShadowArray); 
+  printf("\n\n");
+
+  printf("\n\n\n erodedSumLightArray :\t");
+  printf("%.5f, ", erodedSumLightArray); 
+  printf("\n\n");
 
     // zero out bins
     CUDA_CHECK(cudaMemset(devicefinalImage, 0.0, imageSize * sizeof(float)));
@@ -211,6 +283,12 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
+  printf("\n\n\n finalImage :\t");
+  for(int i = 0; i < finalImage; i++){
+    printf("%.5f, ", finalImage[i]); 
+  }
+  printf("\n\n");
+
   //@@ Free the GPU memory here
   wbTime_start(GPU, "Freeing GPU Memory");
 
@@ -223,8 +301,8 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   CUDA_CHECK(cudaFree(deviceRedLightArray));
   CUDA_CHECK(cudaFree(deviceGreenLightArray));
   CUDA_CHECK(cudaFree(deviceBlueLightArray));
-  CUDA_CHECK(cudaFree(deviceErodedShadowMask));
-  CUDA_CHECK(cudaFree(deviceErodedLightMask));
+  CUDA_CHECK(cudaFree(deviceerodedShadowMask));
+  CUDA_CHECK(cudaFree(deviceerodedLightMask));
   CUDA_CHECK(cudaFree(deviceRedSumShadowArray));
   CUDA_CHECK(cudaFree(deviceGreenSumShadowArray));
   CUDA_CHECK(cudaFree(deviceBlueSumShadowArray));
@@ -236,5 +314,7 @@ void launch_result_integration( float *rgbImage, float *greyShadowMask,
   CUDA_CHECK(cudaFree(deviceSmoothMask));
   CUDA_CHECK(cudaFree(deviceFinalImage));
   wbTime_stop(GPU, "Freeing GPU Memory");
+
+  return 0;
 
 }
