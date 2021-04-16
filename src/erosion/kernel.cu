@@ -25,8 +25,10 @@ __global__ void image_erode(unsigned char* inImage, float* outImage_shadow, floa
                 int curCol = startCol + k;
 
                 if((curRow >= 0 && curRow < height) && (curCol >= 0 && curCol < width)) { // check that pixel is in valid range
-                    value_shadow = min(value, inImage[i * width +j]); // FIXME: check operation
-                    // value_light = min(value, 1 - inImage[i * width +j]); // FIXME: check operation
+                    // output pixel value is the min value of all pixels in the neighborhood
+                    // pixel is set to 0 if any of the neighboring pixels have the value 0
+                    value_shadow = min(value_shadow, inImage[i * width +j]);
+                    value_light = min(value_light, 1 - inImage[i * width +j]);
                 }
             }
         }
