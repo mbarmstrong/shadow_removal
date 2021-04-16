@@ -14,10 +14,11 @@ __global__ void image_erode(unsigned char* inImage, float* outImage_shadow, floa
     int row = threadIdx.y + blockIdx.x * blockDim.y; // row (y-direction) index
 
     if (col < width && row < height) {
-        float value_shadow = 1;
-        float value_light = 1;
         int startRow = row - (mask_width/2);
         int startCol = col - (mask_width/2);
+
+        float value_shadow = 1;
+        float value_light = 1;
 
         for (int j = 0; j < mask_width; j++) {      // row
             for (int k = 0; k < mask_width; k++) {  // column
