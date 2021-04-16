@@ -8,13 +8,14 @@
 // then the pixel is retained (1), else it is deleted (0).
 
 
-__global__ void image_erode(unsigned char* inImage, float* outImage_light, float* outImage_shadow, int mask_width, int width, int height) {
+__global__ void image_erode(unsigned char* inImage, float* outImage_shadow, float* outImage_light, int mask_width, int width, int height) {
     
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column (x-direction) index
     int row = threadIdx.y + blockIdx.x * blockDim.y; // row (y-direction) index
 
     if (col < width && row < height) {
-        float value = 1;
+        float value_shadow = 1;
+        float value_light = 1;
         int startRow = row - (mask_width/2);
         int startCol = col - (mask_width/2);
 
@@ -24,13 +25,14 @@ __global__ void image_erode(unsigned char* inImage, float* outImage_light, float
                 int curCol = startCol + k;
 
                 if((curRow >= 0 && curRow < height) && (curCol >= 0 && curCol < width)) { // check that pixel is in valid range
-                    value = min(value, inImage[i * width +j]); // FIXME: check operation
+                    value_shadow = min(value, inImage[i * width +j]); // FIXME: check operation
+                    // value_light = min(value, 1 - inImage[i * width +j]); // FIXME: check operation
                 }
             }
         }
 
-        outImage_shadow[row * width + col] = value;
-        // outImage_light[]
+        outImage_shadow[row * width + col] = value_shadow;
+        outImage_light[row * width + col] = value_light;
     }
 
     // based on MATLAB imerode function
