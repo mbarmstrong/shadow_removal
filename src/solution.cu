@@ -46,15 +46,32 @@ int main(int argc, char *argv[]) {
   grayImage = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char));
   yuvImage =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char));
 
+  // execute color convert to get grey and yuv images, note this transposes the out put images in memory
+  // so all channels store their pixels sequentially, ie all the y pixels followed by all the u pixels
+  // then folled by all the v pixels for the yuv image
   launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize);
 
   //--------------------------------------------------
   //  Execute otsu's method
   //
   //--------------------------------------------------
-  // Otsu's method uses YUV and grayscale images
-  //launch_otsu_method(outputImage_Gray, outputImage_YUV, bins);
+  // Otsu's method uses U channel of YUV and grayscale image
+  unsigned char *grayMask;
+  unsigned char *yuvMask;
+  unsigned char *u = yuvImage + 1*imageSize;
+  float level = 0.0;
 
+  grayMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+  yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+
+  level = launch_otsu_method(grayImage, imageWidth, imageHeight);
+  launch_image_binarization(grayImage, grayMask, level, imageWidth, imageHeight, true);
+
+  level = launch_otsu_method(u, imageWidth, imageHeight);
+  launch_image_binarization(u, yuvMask, level, imageWidth, imageHeight, false);
+
+  print_image(grayMask, imageWidth, imageHeight);
+  print_image(yuvMask, imageWidth, imageHeight);
 
   //--------------------------------------------------
   //  Execute Result Integration method
@@ -68,6 +85,8 @@ int main(int argc, char *argv[]) {
   free(invImage);
   free(grayImage);
   free(yuvImage);
+  free(grayMask);
+  free(yuvMask);
 
   return 0;
 }

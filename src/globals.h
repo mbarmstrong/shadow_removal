@@ -26,4 +26,35 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
   }
 }
 
+void print_image(unsigned char* image, int imageWidth, int imageHeight) {
+
+    printf("\n");
+    for(int i = 0; i < imageWidth*imageHeight; i++){
+        printf("%4d",image[i]);
+
+        if(i%imageWidth==(imageWidth-1)) printf("\n");
+        else printf(",");
+    }
+    printf("\n");
+}
+
+void print_sparse_array(unsigned int* arr, int size) {
+
+  printf("\n");
+  for(int i = 0; i < size; i++) {
+    if(arr[i] > 0) printf("%4d-%d, ",i, arr[i]);
+  }
+  printf("\n\n");
+}
+
+void print_step_array(float* arr, int size) {
+
+  printf("\n");
+  printf("%d-%.4f, ",0, arr[0]);
+  for(int i = 1; i < size; i++) {
+    if(arr[i] != arr[i-1]) printf("%d-%.4f, ",i, arr[i]);
+  }
+  printf("\n\n");
+}
+
 #endif
