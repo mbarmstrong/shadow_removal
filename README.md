@@ -46,28 +46,44 @@ Here is Coale's .bashrc file. Your equivalent .bashrc is located in your $HOME d
 ```
 # .bashrc
 
-#Coale's .bashrc
-
 # Source global definitions
 if [ -f /etc/bashrc ]; then
         . /etc/bashrc
 fi
 
-# User specific aliases and functions
-module load gcc
-module load cuda91/toolkit/9.1.85
+OS=$(cat /etc/*release | grep CentOS | grep release | grep -o -E '[0-9]\.[0-9]{1,2}'| head -1)
+
+echo "Host is running CentOS release $OS"
 
 bind '"\e[A":history-search-backward'
 bind '"\e[B":history-search-forward'
 
 alias bd="cd /home/u29/cjcoopr/ece569/build_dir"
 
-function isesh {
+#ocelot setup
+if [ "$OS" = "6.10" ]; then
+
+  module load gcc
+  module load cuda91/toolkit/9.1.85
+
+  function isesh {
+
+    echo "reqesting session for $1 min"
+    qsub -I -N add -W group_list=ece569 -q standard -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:$1:00
+  }
+
+#elgato setup
+elif [ "$OS" = "7.9" ]; then
+
+  module load openmpi3
+  module load cuda10
+
+  function isesh {
 
     echo "reqesting session for $1 min"
     qsub -I -N add -W group_list=ece569 -q windfall -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:$1:00
-}
-
+  }
+fi
 ```
 
 ## Running an interactive session
