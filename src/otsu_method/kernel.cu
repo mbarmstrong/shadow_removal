@@ -140,15 +140,15 @@ __global__ void create_binarized_image(unsigned char *inputImage, unsigned char 
 		int idx = row * width + col;   	// mapping 2D to 1D coordinate
         
         //convert to float to round between 0 and 1
-        float pixel = (float)inputImage[idx]/(float)(NUM_BINS-1);
+        float pixel = (float)inputImage[idx] / (float)(NUM_BINS-1);
 
         if(flipped){
           //round to 0 or 1 based on thrshold, then flips all 0s to 1s and vis versa
-          outputImage[idx] = (unsigned char)(1-round(pixel-threshold+0.5));
+          outputImage[idx] = (unsigned char)(1-round(pixel-threshold+0.49999999));
         }
         else {
           //round to 0 or 1 based on thrshold
-          outputImage[idx] = (unsigned char)round(pixel-threshold+0.5);
+          outputImage[idx] = (unsigned char)round(pixel-threshold+0.49999999);
         }
     }
 

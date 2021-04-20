@@ -2,11 +2,13 @@
 #include "globals.h"
 #include "./color_conversion/launch.cu"
 #include "./otsu_method/launch.cu"
+#include "./erosion/launch.cu"
+#include "./convolution/launch.cu"
 
 int main(int argc, char *argv[]) {
 
   //-------------------------------------------------
-  //  Get inputs and load inital rgb image
+  //  get inputs and load inital rgb image
   //
   //-------------------------------------------------
   wbArg_t args;
@@ -32,8 +34,8 @@ int main(int argc, char *argv[]) {
           imageWidth, imageHeight, NUM_CHANNELS);
 
   //--------------------------------------------------
-  //  Execute color conversion kernels to generate
-  //  the three images: color invarient, gray and YUV
+  // execute color conversion 
+  // generate three images: color invarient, gray and YUV
   //--------------------------------------------------
   float *rgbImage;
   float *invImage;
@@ -46,16 +48,15 @@ int main(int argc, char *argv[]) {
   grayImage = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char));
   yuvImage =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char));
 
-  // execute color convert to get grey and yuv images, note this transposes the out put images in memory
-  // so all channels store their pixels sequentially, ie all the y pixels followed by all the u pixels
-  // then folled by all the v pixels for the yuv image
+  // execute color convert to get grey and yuv images, note this transposes the output images in memory
+  // so all channels store their pixels sequentially, for example all the y pixels followed by all the
+  // u pixels then folled by all the v pixels for the yuv image
   launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize);
 
   //--------------------------------------------------
-  //  Execute otsu's method
-  //
+  // execute otsu's method
+  // using U channel of YUV and grayscale image
   //--------------------------------------------------
-  // Otsu's method uses U channel of YUV and grayscale image
   unsigned char *grayMask;
   unsigned char *yuvMask;
   unsigned char *u = yuvImage + 1*imageSize;
@@ -65,13 +66,34 @@ int main(int argc, char *argv[]) {
   yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
   level = launch_otsu_method(grayImage, imageWidth, imageHeight);
-  launch_image_binarization(grayImage, grayMask, level, imageWidth, imageHeight, true);
+  launch_image_binarization(grayImage, grayMask, level, imageWidth, imageHeight, false);
 
   level = launch_otsu_method(u, imageWidth, imageHeight);
   launch_image_binarization(u, yuvMask, level, imageWidth, imageHeight, false);
 
-  print_image(grayMask, imageWidth, imageHeight);
-  print_image(yuvMask, imageWidth, imageHeight);
+  //--------------------------------------------------
+  // execute erosion
+  //
+  //--------------------------------------------------
+  unsigned char *erodedShadow;
+  unsigned char *erodedLight;
+  int maskWidth = 5;
+
+  erodedShadow = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+  erodedLight = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+
+  launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight); 
+
+  //--------------------------------------------------
+  // execute convolution
+  //
+  //--------------------------------------------------
+
+  float *smoothMask;
+
+  smoothMask = (float *)malloc(imageSize * sizeof(float));
+
+  launch_convolution(yuvMask, smoothMask, maskWidth, imageWidth, imageHeight);
 
   //--------------------------------------------------
   //  Execute Result Integration method
@@ -87,6 +109,9 @@ int main(int argc, char *argv[]) {
   free(yuvImage);
   free(grayMask);
   free(yuvMask);
-
+  free(erodedShadow);
+  free(erodedLight);
+  free(smoothMask);
+  
   return 0;
 }

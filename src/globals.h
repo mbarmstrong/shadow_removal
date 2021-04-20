@@ -38,6 +38,18 @@ void print_image(unsigned char* image, int imageWidth, int imageHeight) {
     printf("\n");
 }
 
+void print_image(float* image, int imageWidth, int imageHeight) {
+
+    printf("\n");
+    for(int i = 0; i < imageWidth*imageHeight; i++){
+        printf("%.4f",image[i]);
+
+        if(i%imageWidth==(imageWidth-1)) printf("\n");
+        else printf(",");
+    }
+    printf("\n");
+}
+
 void print_sparse_array(unsigned int* arr, int size) {
 
   printf("\n");

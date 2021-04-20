@@ -123,7 +123,7 @@ void launch_image_binarization(unsigned char* image, unsigned char* binaryImage,
   dim3 gridDim2(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
   dim3 blockDim2(n_threads,n_threads);
   create_binarized_image<<<gridDim2, blockDim2>>>(deviceImage, deviceBinaryImage,
-                                                level, imageWidth, imageHeight,flipped);
+                                                level, imageWidth, imageHeight, flipped);
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
 

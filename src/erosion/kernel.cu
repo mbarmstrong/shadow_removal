@@ -8,17 +8,17 @@
 // then the pixel is retained (1), else it is deleted (0).
 
 
-__global__ void image_erode(unsigned char* inImage, float* outImage_shadow, float* outImage_light, int mask_width, int width, int height) {
+__global__ void image_erode(unsigned char* inImage, unsigned char* outImage_shadow, unsigned char* outImage_light, int mask_width, int width, int height) {
     
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column (x-direction) index
-    int row = threadIdx.y + blockIdx.x * blockDim.y; // row (y-direction) index
+    int row = threadIdx.y + blockIdx.y * blockDim.y; // row (y-direction) index
 
     if (col < width && row < height) {
         int startRow = row - (mask_width/2);
         int startCol = col - (mask_width/2);
 
-        float value_shadow = 1;
-        float value_light = 1;
+        unsigned char value_shadow = 1;
+        unsigned char value_light = 1;
 
         for (int j = 0; j < mask_width; j++) {      // row
             for (int k = 0; k < mask_width; k++) {  // column
@@ -28,8 +28,8 @@ __global__ void image_erode(unsigned char* inImage, float* outImage_shadow, floa
                 if((curRow >= 0 && curRow < height) && (curCol >= 0 && curCol < width)) { // check that pixel is in valid range
                     // output pixel value is the min value of all pixels in the neighborhood
                     // pixel is set to 0 if any of the neighboring pixels have the value 0
-                    value_shadow = min(value_shadow, inImage[i * width +j]);
-                    value_light = min(value_light, 1 - inImage[i * width +j]);
+                    value_shadow = min(value_shadow, inImage[curRow * width + curCol]);
+                    value_light = min(value_light, 1 - inImage[curRow * width + curCol]);
                 }
             }
         }

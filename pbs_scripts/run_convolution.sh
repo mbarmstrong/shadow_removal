@@ -12,5 +12,5 @@ DATADIR=$HOME/ece569/shadow_removal/data;
 #fi
 
 
-$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/plt4.ppm -t image
+$BUILDDIR/ConvUnitTest_Solution -i $DATADIR/4Image.ppm -t image
 

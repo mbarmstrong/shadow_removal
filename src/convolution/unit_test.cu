@@ -2,58 +2,34 @@
 #include "kernel.cu"
 #include "../globals.h"
 
-int main(void) {
+void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
-  unsigned char *hostInputImage;
-  unsigned char *deviceInputImage;
   float *hostOutputImage;
-  float *deviceOutputImage;
-  float *hostMask;
-  float *deviceMask;
-  int maskWidth = 1;
-  int imageHeight = 2;
-  int imageWidth = 2;
-  int imageSize = imageHeight*imageWidth;
 
-  hostInputImage = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+  unsigned char *deviceInputImage;
+  float         *deviceOutputImage;
+
+  int imageSize = imageWidth * imageHeight;
+  int maskWidth = 3;
+
   hostOutputImage = (float *)malloc(imageSize * sizeof(float));
-  hostMask = (float *)malloc(maskWidth * maskWidth * sizeof(float));
-
-  printf("\n\ninput image:\t");
-  for(int i = 0; i < imageSize; i++){
-    hostInputImage[i] = 1;
-    printf("%d, ", hostInputImage[i]); 
-  }
-  printf("\n\n");
-  
-  printf("\n\nmask:\t");
-  for(int i = 0; i < maskWidth*maskWidth; i++){
-    hostMask[i] = 0.5;
-    printf("%f, ", hostMask[i]); 
-  }
-  printf("\n\n");
 
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceInputImage, imageSize * sizeof(unsigned char)) );
   CUDA_CHECK( cudaMalloc((void **)&deviceOutputImage, imageSize * sizeof(float)) );
-  CUDA_CHECK( cudaMalloc((void **)&deviceMask, maskWidth * maskWidth * sizeof(float)) );
   CUDA_CHECK( cudaDeviceSynchronize() );
   wbTime_stop(GPU, "Allocating GPU memory.");
 
   //@@ Copy memory to the GPU here
   wbTime_start(GPU, "Copying input memory to the GPU.");
-  CUDA_CHECK(cudaMemcpy(deviceInputImage, hostInputImage,
-                        imageSize * sizeof(unsigned char),
-                        cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(deviceMask, hostMask,
-                        maskWidth * maskWidth * sizeof(float),
+  CUDA_CHECK(cudaMemcpy(deviceInputImage, image, imageSize * sizeof(unsigned char),
                         cudaMemcpyHostToDevice));                        
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  dim3 blockDim1(8,8), gridDim1(1,1);
-  conv2d<<<gridDim1, blockDim1>>>(deviceInputImage, deviceMask, deviceOutputImage,
-                                  maskWidth, imageWidth, imageHeight);
+  dim3 blockDim(8,8), gridDim(1,1);
+  conv2d<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage, maskWidth,
+                                imageWidth, imageHeight);
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
@@ -63,17 +39,65 @@ int main(void) {
   CUDA_CHECK(cudaMemcpy(hostOutputImage, deviceOutputImage,
                         imageSize * sizeof(float),
                         cudaMemcpyDeviceToHost));
-  CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
-  printf("\n\noutput image:\t");
-  for(int i = 0; i < imageSize; i++){
-      printf("%.5f, ", hostOutputImage[i]);
-  }
-  printf("\n\n");
-
+  printf("\noutput image:\n");
+  print_image(hostOutputImage,imageWidth,imageHeight);
+  
   CUDA_CHECK(cudaFree(deviceInputImage));
   CUDA_CHECK(cudaFree(deviceOutputImage));
 
-  return 0;
+  free(hostOutputImage);
+
+}
+
+
+int main(int argc, char *argv[]) {
+  
+  	wbArg_t args;
+  	int imageWidth;
+  	int imageHeight;
+    int imageSize;
+
+  	char *inputImageFile;
+
+  	wbImage_t inputImage_RGB;
+
+    unsigned char* inputImage_RGB_uint8;
+
+  	args = wbArg_read(argc, argv); // parse the input arguments
+
+  	inputImageFile = wbArg_getInputFile(args, 0);
+  	inputImage_RGB = wbImport(inputImageFile);
+
+  	imageWidth = wbImage_getWidth(inputImage_RGB);
+  	imageHeight = wbImage_getHeight(inputImage_RGB);
+
+    imageSize = imageWidth * imageHeight;
+
+    printf("\nRunning convolution unit test on image of %dx%d\n",
+             imageWidth, imageHeight, NUM_CHANNELS);
+
+    //inputImage_RGB_uint8 = (unsigned char*)malloc(imageSize * sizeof(unsigned char));
+
+    // for(int i = 0; i < imageSize; i++){
+    //     inputImage_RGB_uint8[i] = (unsigned char)(round(wbImage_getData(inputImage_RGB)[i*3]));
+    // }
+
+    unsigned char data[16] = {1, 1, 1, 1,
+                              1, 1, 1, 1,
+                              1, 1, 1, 1,
+                              1, 1, 1, 1};
+
+    inputImage_RGB_uint8 = data;
+
+    print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
+
+    unit_test(inputImage_RGB_uint8,imageWidth,imageHeight);
+
+    //free(inputImage_RGB_uint8);
+    wbImage_delete(inputImage_RGB);
+
+    return 0;
+
 }
