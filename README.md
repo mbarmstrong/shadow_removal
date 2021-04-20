@@ -1,6 +1,6 @@
 # shadow_removal
 
-## How to build code
+## how to build code
 1. login to the hpc as normal and navigate to your $HOME/ece569 directory
     
     `$ cd ~/ece569`
@@ -23,9 +23,9 @@
     
     `$ make`
    
-## Usefull bash profile setup
+## usefull bash profile setup
 
-Here is Coale's .bashrc file. Your equivalent .bashrc is located in your $HOME directory. I think everyone will find the iteractive session part usefull. To set this up:
+here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME directory. to set this up:
 
 1. go to home directory
 
@@ -86,7 +86,7 @@ elif [ "$OS" = "7.9" ]; then
 fi
 ```
 
-## Running an interactive session
+## running an interactive session
 
 1. first add the isesh function to your .bashrc file from the steps above
 1. login to ocelote or elgato
@@ -94,9 +94,9 @@ fi
 
     `$ isesh 5`
    
-   This will connect with a node on the hpc for 5 min but you can specify however much time you'd like. Here you can now launch executables with GPU kernels directly for the command line. For example:
+   this will connect with a node on the hpc for 5 min but you can specify however much time you'd like. here you can now launch executables with GPU kernels directly for the command line. for example:
   
-1. Then to execute the shadow removal solution:
+1. then to execute the shadow removal solution:
 
    `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
    
