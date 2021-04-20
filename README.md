@@ -40,7 +40,7 @@ here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME d
 1. source the file
 
     `$ source .bashrc`
-1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied.
+1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied
 
 
 ```
@@ -88,15 +88,15 @@ fi
 
 ## running an interactive session
 
-1. first add the isesh function to your .bashrc file from the steps above
 1. login to ocelote or elgato
-1. launch the session with the folloiwng command
+2. add the isesh function to your .bashrc file from the steps above
+3. launch the session with the folloiwng command
 
     `$ isesh 5`
    
-   this will connect with a node on the hpc for 5 min but you can specify however much time you'd like. here you can now launch executables with GPU kernels directly for the command line. for example:
+   this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly for the command line.
   
-1. then to execute the shadow removal solution:
+1. to execute the shadow removal solution:
 
    `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
    
