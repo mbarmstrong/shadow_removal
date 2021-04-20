@@ -97,3 +97,7 @@ fi
    This will connect with a node on the hpc for 5 min but you can specify however much time you'd like. Here you can now launch executables with GPU kernels directly for the command line. For example:
    
    `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
+   
+   or launch the shell script in the pbs scripts folder:
+   
+   `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`
