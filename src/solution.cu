@@ -4,6 +4,7 @@
 #include "./otsu_method/launch.cu"
 #include "./erosion/launch.cu"
 #include "./convolution/launch.cu"
+#include "./result_integration/launch.cu"
 
 int main(int argc, char *argv[]) {
 
@@ -100,7 +101,12 @@ int main(int argc, char *argv[]) {
   //
   //--------------------------------------------------
   // Result Integration uses original image, gray shadow,gray Light, Eroded shadow, eroded light and smooth mask
-  //launch_result_integration();
+  
+  unsigned char *finalImage;
+
+  finalImage = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+
+  launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth, imageHeight);
 
   wbImage_delete(inputImage_RGB);
 
