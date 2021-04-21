@@ -77,6 +77,12 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
                         cudaMemcpyHostToDevice));    
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
+
+  printf("\nGray Shadow Mask:\t");
+  print_image(erodedShadowMask,imageWidth,imageHeight);
+
+  printf("\nGray Light Mask:\t");
+  print_image(erodedLightMask,imageWidth,imageHeight);
   
   // Launch multiple_rgbImage_byMask kernel on the bins
   {
@@ -117,6 +123,19 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
                         cudaMemcpyDeviceToHost));                       
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
+
+  printf("\nRed Shadow Array:\t");
+  print_image(redShadowArray,imageWidth,imageHeight);
+  printf("\nGreen Shadow Array:\t");
+  print_image(greenShadowArray,imageWidth,imageHeight);
+  printf("\nBlue Shadow Array:\t");
+  print_image(blueShadowArray,imageWidth,imageHeight);
+  printf("\nRed Light Array:\t");
+  print_image(redLightArray,imageWidth,imageHeight);
+  printf("\nGreen Light Array:\t");
+  print_image(greenLightArray,imageWidth,imageHeight);
+  printf("\nBlue Light Array:\t");
+  print_image(blueLightArray,imageWidth,imageHeight);
 
 
   wbTime_start(GPU, "Allocating GPU memory.");
@@ -425,18 +444,18 @@ int main(int argc, char *argv[]) {
   printf("\nRunning Result Integration unit test on image of %dx%d\n",
            imageWidth, imageHeight, NUM_CHANNELS);
 
-  unsigned char erodedShadow[16] = {1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                    0, 0, 0, 0,
-                                    0, 0, 0, 0};
+  unsigned char erodedShadow[16] = {0, 0, 1, 1,
+                                    0, 0, 1, 1,
+                                    1, 1, 0, 0,
+                                    1, 1, 0, 0};
   unsigned char erodedLight[16] =  {0, 0, 0, 0,
                                     0, 0, 0, 0,
-                                    1, 1, 1, 1,
-                                    1, 1, 1, 1};
-  float smoothMask[16] =  {0.36, 0.48, 0.36, 0.48,
-                                   0.36, 0.48, 0.36, 0.48,
-                                   1.0, 1.0, 1.0, 1.0,
-                                   1.0, 1.0, 1.0, 0.0};
+                                    0, 0, 0, 0,
+                                    0, 0, 0, 0};
+  float smoothMask[16] =  {0.4444,0.6667,0.6667,0.4444,
+                           0.6667,1.0000,1.0000,0.6667,
+                           0.6667,1.0000,1.0000,0.6667,
+                           0.4444,0.6667,0.6667,0.444};
 
   inputImage_RGB_float  = wbImage_getData(inputImage_RGB);
 
