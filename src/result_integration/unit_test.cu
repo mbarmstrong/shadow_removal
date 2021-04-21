@@ -36,6 +36,14 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
   unsigned char *deviceBlueSumLightArray;
   unsigned char *deviceErodedSumShadowArray;
   unsigned char *deviceErodedSumLightArray;
+  unsigned char *deviceRedSumShadowArray_interm;
+  unsigned char *deviceGreenSumShadowArray_interm;
+  unsigned char *deviceBlueSumShadowArray_interm;
+  unsigned char *deviceRedSumLightArray_interm; 
+  unsigned char *deviceGreenSumLightArray_interm;
+  unsigned char *deviceBlueSumLightArray_interm;
+  unsigned char *deviceErodedSumShadowArray_interm;
+  unsigned char *deviceErodedSumLightArray_interm;
   float *deviceSmoothMask;
   unsigned char *deviceFinalImage;
 
@@ -45,6 +53,7 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
 
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceRgbImage, imageSize * sizeof(float)));
+  CUDA_CHECK( cudaMalloc((void **)&deviceSmoothMask, imageSize * sizeof(float)));
   CUDA_CHECK( cudaMalloc((void **)&deviceErodedShadowMask, imageSize * sizeof(unsigned char)));
   CUDA_CHECK( cudaMalloc((void **)&deviceErodedLightMask, imageSize * sizeof(unsigned char)));
   CUDA_CHECK( cudaMalloc((void **)&deviceRedShadowArray, imageSize * sizeof(unsigned char)));
@@ -59,6 +68,8 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
   // Copy memory to the GPU here
   wbTime_start(GPU, "Copying input memory to the GPU.");
   CUDA_CHECK(cudaMemcpy(deviceRgbImage, rgbImage, imageSize * sizeof(float),
+                        cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(deviceSmoothMask, smoothMask, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(deviceErodedShadowMask, erodedShadowMask, imageSize * sizeof(unsigned char),
                         cudaMemcpyHostToDevice));
@@ -109,76 +120,149 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
 
 
   wbTime_start(GPU, "Allocating GPU memory.");
-  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumShadowArray, imageSize * sizeof(unsigned char)));    
-  CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumShadowArray, imageSize * sizeof(unsigned char)));    
-  CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumShadowArray, imageSize * sizeof(unsigned char)));    
-  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumLightArray, imageSize * sizeof(unsigned char)));    
+  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumShadowArray, imageSize * sizeof(unsigned char)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumShadowArray_interm, imageSize * sizeof(unsigned char)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumShadowArray, imageSize * sizeof(unsigned char)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumShadowArray_interm, imageSize * sizeof(unsigned char))); 
+  CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumShadowArray, imageSize * sizeof(unsigned char)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumShadowArray_interm, imageSize * sizeof(unsigned char)));  
+  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumLightArray, imageSize * sizeof(unsigned char)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumLightArray_interm, imageSize * sizeof(unsigned char)));  
   CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumLightArray, imageSize * sizeof(unsigned char)));
+  CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumLightArray_interm, imageSize * sizeof(unsigned char)));
   CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumLightArray, imageSize * sizeof(unsigned char))); 
+  CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumLightArray_interm, imageSize * sizeof(unsigned char))); 
   CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumLightArray, imageSize * sizeof(unsigned char))); 
-  CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumShadowArray, imageSize * sizeof(unsigned char)));       
+  CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumLightArray_interm, imageSize * sizeof(unsigned char))); 
+  CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumShadowArray, imageSize * sizeof(unsigned char)));  
+  CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumShadowArray_interm, imageSize * sizeof(unsigned char)));        
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Allocating GPU memory.");
 
   // Launch sum_up_arrays kernel on the light and shadow arrays for each channel
   {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-        deviceRedShadowArray,deviceRedSumShadowArray,imageSize);
-      CUDA_CHECK(cudaGetLastError());
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceRedShadowArray,deviceRedSumShadowArray_interm,imageSize);
+        CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceRedSumShadowArray_interm,deviceRedSumShadowArray,imageSize);  
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
   }
    // Launch sum_up_arrays kernel on the light and shadow arrays for each channel
    {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-        deviceGreenShadowArray,deviceGreenSumShadowArray,imageSize);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceGreenShadowArray,deviceGreenSumShadowArray_interm,imageSize);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());    
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceGreenSumShadowArray_interm,deviceGreenSumShadowArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   }
    // Launch sum_up_arrays kernel on the shadow arrays for each channel
    {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-        deviceBlueShadowArray,deviceBlueSumShadowArray,imageSize);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceBlueShadowArray,deviceBlueSumShadowArray_interm,imageSize);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());    
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceBlueSumShadowArray_interm,deviceBlueSumShadowArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   }
    // Launch sum_up_arrays kernel on the light arrays for each channel
    {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-        deviceRedLightArray,deviceRedSumLightArray,imageSize);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceRedLightArray,deviceRedSumLightArray_interm,imageSize);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());    
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceRedSumLightArray_interm,deviceRedSumLightArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   }
   {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-          deviceGreenLightArray,deviceGreenSumLightArray,imageSize);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceGreenLightArray,deviceGreenSumLightArray_interm,imageSize);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());    
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceGreenSumLightArray_interm,deviceGreenSumLightArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   }
   {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-          deviceBlueLightArray,deviceBlueSumLightArray,imageSize);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceBlueLightArray,deviceBlueSumLightArray_interm,imageSize);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());    
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceBlueSumLightArray_interm,deviceBlueSumLightArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   }
   // Launch sum_up_arrays kernel on the eroded shadow array
   {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-      deviceErodedShadowMask,deviceErodedSumShadowArray,imageSize);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+        deviceErodedShadowMask,deviceErodedSumShadowArray_interm,imageSize);
+      CUDA_CHECK(cudaGetLastError());
+      CUDA_CHECK(cudaDeviceSynchronize());
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceErodedSumShadowArray_interm,deviceErodedSumShadowArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   } 
   // Launch sum_up_arrays kernel on the eroded light array
   {
-    dim3 blockDim(8,8), gridDim(1,1);
-    sum_up_arrays_by_reduction<<<gridDim, blockDim>>>(
-      deviceErodedLightMask,deviceErodedSumLightArray,imageSize);
+    //dim3 blockDim(8,8), gridDim(1,1);
+    const int maxThreadsPerBlock = 16;
+    int threads = maxThreadsPerBlock;
+    int blocks = imageSize / maxThreadsPerBlock;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+      deviceErodedLightMask,deviceErodedSumLightArray_interm,imageSize);
+      CUDA_CHECK(cudaGetLastError());
+      CUDA_CHECK(cudaDeviceSynchronize());  
+    threads = blocks; // launch one thread for each block in prev step
+    blocks = 1;
+    sum_up_arrays_by_reduction<<<blocks, threads, threads * sizeof(unsigned char)>>>(
+    deviceErodedSumLightArray_interm,deviceErodedSumLightArray,imageSize); 
       CUDA_CHECK(cudaGetLastError());
       CUDA_CHECK(cudaDeviceSynchronize());
   } 
@@ -221,18 +305,23 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
-  printf("\nSum of Red Shadow Array:\t%.4f",redSumShadowArray);
-  printf("\nSum of Blue Shadow Array:\t%.4f",blueSumShadowArray);
-  printf("\nSum of Green Shadow Array:\t%.4f",greenSumShadowArray);
-  printf("\nSum of Red Light Array:\t%.4f",redSumLightArray);
-  printf("\nSum of Blue Light Array:\t%.4f",blueSumLightArray);
-  printf("\nSum of Green Light Array:\t%.4f",greenSumLightArray);
+  printf("\nSum of Red Shadow Array:\t");
+  print_image(redSumShadowArray,imageWidth,imageHeight);
+  printf("\nSum of Green Shadow Array:\t");
+  print_image(greenSumShadowArray,imageWidth,imageHeight);
+  printf("\nSum of Blue Shadow Array:\t");
+  print_image(blueSumShadowArray,imageWidth,imageHeight);
+  printf("\nSum of Red Light Array:\t");
+  print_image(redSumLightArray,imageWidth,imageHeight);
+  printf("\nSum of Green Light Array:\t");
+  print_image(greenSumLightArray,imageWidth,imageHeight);
+  printf("\nSum of Blue Light Array:\t");
+  print_image(blueSumLightArray,imageWidth,imageHeight);
 
   finalImage = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
   wbTime_start(GPU, "Allocating GPU memory.");
-  CUDA_CHECK( cudaMalloc((void **)&deviceFinalImage, imageSize * sizeof(unsigned char))); 
-  CUDA_CHECK( cudaMalloc((void **)&deviceSmoothMask, imageSize * sizeof(float)));      
+  CUDA_CHECK( cudaMalloc((void **)&deviceFinalImage, imageSize * sizeof(unsigned char)));  
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Allocating GPU memory.");
 
@@ -244,7 +333,7 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     calculate_final_image<<<gridDim, blockDim>>>(
     deviceRedSumShadowArray, deviceGreenSumShadowArray,deviceBlueSumShadowArray,
     deviceRedSumLightArray, deviceGreenSumLightArray,deviceBlueSumLightArray,
-    deviceErodedSumShadowArray,deviceErodedSumShadowArray,
+    deviceErodedSumShadowArray,deviceErodedSumLightArray,
     deviceRgbImage, deviceSmoothMask, deviceFinalImage,
     imageWidth, imageHeight, NUM_CHANNELS);
       CUDA_CHECK(cudaGetLastError());
@@ -275,17 +364,41 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
   CUDA_CHECK(cudaFree(deviceErodedShadowMask));
   CUDA_CHECK(cudaFree(deviceErodedLightMask));
   CUDA_CHECK(cudaFree(deviceRedSumShadowArray));
+  CUDA_CHECK(cudaFree(deviceRedSumShadowArray_interm));
   CUDA_CHECK(cudaFree(deviceGreenSumShadowArray));
+  CUDA_CHECK(cudaFree(deviceGreenSumShadowArray_interm));
   CUDA_CHECK(cudaFree(deviceBlueSumShadowArray));
+  CUDA_CHECK(cudaFree(deviceBlueSumShadowArray_interm));
   CUDA_CHECK(cudaFree(deviceRedSumLightArray)); 
+  CUDA_CHECK(cudaFree(deviceRedSumLightArray_interm)); 
   CUDA_CHECK(cudaFree(deviceGreenSumLightArray));
+  CUDA_CHECK(cudaFree(deviceGreenSumLightArray_interm));
   CUDA_CHECK(cudaFree(deviceBlueSumLightArray));
+  CUDA_CHECK(cudaFree(deviceBlueSumLightArray_interm));
   CUDA_CHECK(cudaFree(deviceErodedSumShadowArray));
+  CUDA_CHECK(cudaFree(deviceErodedSumShadowArray_interm));
   CUDA_CHECK(cudaFree(deviceErodedSumLightArray));
+  CUDA_CHECK(cudaFree(deviceErodedSumLightArray_interm));
   CUDA_CHECK(cudaFree(deviceSmoothMask));
   CUDA_CHECK(cudaFree(deviceFinalImage));
   wbTime_stop(GPU, "Freeing GPU Memory");
 
+  free(finalImage);
+  free(redShadowArray);
+  free(greenShadowArray);
+  free(blueShadowArray);
+  free(redLightArray);
+  free(greenLightArray);
+  free(blueLightArray);
+  free(redSumShadowArray);
+  free(greenSumShadowArray);
+  free(blueSumShadowArray);
+  free(redSumLightArray); 
+  free(greenSumLightArray);
+  free(blueSumLightArray);
+  free(erodedSumShadowArray);
+  free(erodedSumLightArray);
+  free(smoothMask);
 }
 
 int main(int argc, char *argv[]) {

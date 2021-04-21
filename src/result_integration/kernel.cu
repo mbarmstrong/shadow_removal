@@ -64,18 +64,19 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
   // }  
  // Kernel 2: Array Reduction Kernel - 1D array
   __global__ void sum_up_arrays_by_reduction(unsigned char *g_idata, unsigned char *g_odata, int n) {
-    __shared__ int sdata[256];
+    extern __shared__ int sdata[];
 
     // each thread loads one element from global to shared mem
     int i = blockIdx.x*blockDim.x + threadIdx.x;
+    int tid = threadIdx.x;
 
-    sdata[threadIdx.x] = g_idata[i];
+    sdata[tid] = g_idata[i];
 
-    __syncthreads();
     // do reduction in shared mem
     for (int s=1; s < blockDim.x; s *=2)
     {
-        int index = 2 * s * threadIdx.x;;
+      __syncthreads();
+        int index = 2 * s * tid;
 
         if (index < blockDim.x)
         {
@@ -85,8 +86,8 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
 
     // write result for this block to global mem
-    if (threadIdx.x == 0) {
-        g_odata[blockIdx.x] = sdata[0];
+    if (tid == 0) {
+        g_odata[blockIdx.x] = sdata[tid];
     }
 
 }
@@ -120,27 +121,3 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
 
   }  
-  
-  // Uses the RGB ratios produced in Kernel 3 and the input image to remove the shadow and create the final output 
-  
-  // __global__ void create_final_shadowless_output(float *rgbImage, unsigned char *smoothMask, unsigned char *finalImage
-  //   float redRatio,float greenRatio,float blueRatio,int width, int height, int numChannels) {
-   
-  //   int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
-  //   int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
-  
-  //   if (col < width && row < height) {  // check boundary condition
-  //       int idx = row * width + col;      // mapping 2D to 1D coordinate
-  //       // load input RGB values
-  //       float red = rgbImage[numChannels * idx];      // red component
-  //       float green = rgbImage[numChannels * idx + 1];  // green component
-  //       float blue = rgbImage[numChannels * idx + 2];  // blue component
-
-  //       finalImage[numChannels * idx] = (redRatio + 1) / ((1 - smoothMask[idx]) * redRatio + 1) * rgbImage[numChannels * idx];
-  //       finalImage[numChannels * idx + 1] = (greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * rgbImage[numChannels * idx + 1];
-  //       finalImage[numChannels * idx + 2] = (blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * rgbImage[numChannels * idx + 2];
-  
-  //   }
-
-
-  // }
