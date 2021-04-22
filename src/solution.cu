@@ -102,9 +102,9 @@ int main(int argc, char *argv[]) {
   //--------------------------------------------------
   // Result Integration uses original image, gray shadow,gray Light, Eroded shadow, eroded light and smooth mask
   
-  unsigned char *finalImage;
+  float *finalImage;
 
-  finalImage = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+  finalImage = (float *)malloc(imageSize * sizeof(float));
 
   launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth, imageHeight);
 
