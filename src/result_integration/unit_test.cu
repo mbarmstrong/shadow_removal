@@ -334,7 +334,7 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     CUDA_CHECK(cudaMemset(deviceFinalImage, 0.0, imageSize * sizeof(float)));
   // Launch calculate_rgb_ratio kernel on the eroded shadow array and calculates the final image
   {
-    dim3 blockDim(8,8), gridDim(1,1);
+    dim3 blockDim(8,8,1), gridDim(1,1,1);
     calculate_final_image<<<gridDim, blockDim>>>(
     deviceRedSumShadowArray, deviceGreenSumShadowArray,deviceBlueSumShadowArray,
     deviceRedSumLightArray, deviceGreenSumLightArray,deviceBlueSumLightArray,
@@ -404,6 +404,8 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
   free(erodedSumShadowArray);
   free(erodedSumLightArray);
   free(smoothMask);
+
+  printf("\n Exiting unit_test\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -449,8 +451,11 @@ int main(int argc, char *argv[]) {
 
   unit_test(inputImage_RGB_float,erodedShadow,erodedLight,smoothMask,imageWidth, imageHeight);
 
+  printf("\nAfter exiting unit_test\n");
   free(inputImage_RGB_float);
   wbImage_delete(inputImage_RGB);
+
+  printf("\nBefore terminating unit_test\n");
 
   return 0;
 
