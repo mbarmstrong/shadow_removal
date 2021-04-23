@@ -62,6 +62,7 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
   //   if (blockDim.x >= 2) 
   //     sdata[tid] += sdata[tid + 1]; 
   // }  
+
  // Kernel 2: Array Reduction Kernel - 1D array
   __global__ void sum_up_arrays_by_reduction(float *g_idata, float *g_odata, int n) {
     extern __shared__ float sdata[];
@@ -125,15 +126,15 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
   // Calculates the Red, Green and Blue ratios from the sum in Kernel 2 to produce the shadowless image 
   // Uses the RGB ratios produced in Kernel 3 and the input image to remove the shadow and create the final output 
 
-  __global__ void calculate_final_image(float *redSumShadowArray, float *greenSumShadowArray,float *blueSumShadowArray,
-    float *redSumLightArray, float *greenSumLightArray,float *blueSumLightArray,
-    float *erodedSumShadowArray,float *erodedSumLightArray,
+  __global__ void calculate_final_image(float redSumShadowArray, float greenSumShadowArray,float blueSumShadowArray,
+    float redSumLightArray, float greenSumLightArray,float blueSumLightArray,
+    float erodedSumShadowArray,float erodedSumLightArray,
     float *rgbImage, float *smoothMask, float *finalImage,
     int width, int height, int numChannels) {
   
-    float redRatio = (((redSumLightArray[0]/erodedSumLightArray[0])/(redSumShadowArray[0]/erodedSumShadowArray[0])) -1);
-    float greenRatio = (((greenSumLightArray[0]/erodedSumLightArray[0])/(greenSumShadowArray[0]/erodedSumShadowArray[0])) -1);
-    float blueRatio = (((blueSumLightArray[0]/erodedSumLightArray[0])/(blueSumShadowArray[0]/erodedSumShadowArray[0])) -1);
+    float redRatio = (((redSumLightArray/erodedSumLightArray)/(redSumShadowArray/erodedSumShadowArray)) -1);
+    float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
+    float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
   
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
@@ -149,5 +150,4 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
         finalImage[numChannels * idx + 1] = ((greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * green);
         finalImage[numChannels * idx + 2] = ((blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * blue);
     }
-
-  }  
+  }

@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   
   float *finalImage;
 
-  finalImage = (float *)malloc(imageSize * sizeof(float));
+  finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
   print_pixel(rgbImage,0,0,1,3,imageSize);
 
