@@ -23,14 +23,6 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     float *deviceBlueLightArray;
     unsigned char *deviceErodedShadowMask;
     unsigned char *deviceErodedLightMask;
-    float deviceRedSumShadowArray;
-    float deviceGreenSumShadowArray;
-    float deviceBlueSumShadowArray;
-    float deviceRedSumLightArray; 
-    float deviceGreenSumLightArray;
-    float deviceBlueSumLightArray;
-    float deviceErodedSumShadowArray;
-    float deviceErodedSumLightArray;
     float *deviceSmoothMask;
     float *deviceFinalImage;
 
@@ -185,7 +177,6 @@ int main(int argc, char *argv[]) {
   wbArg_t args;
   int imageWidth;
   int imageHeight;
-  int imageSize;
 
   char *inputImageFile;
 
