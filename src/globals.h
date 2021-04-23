@@ -3,6 +3,7 @@
 
 #define NUM_CHANNELS 3
 #define NUM_BINS 256
+#define MAX_BLOCK_SZ 1024
 
 #define wbCheck(stmt)                                                     \
   do {                                                                    \

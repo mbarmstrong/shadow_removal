@@ -104,9 +104,12 @@ int main(int argc, char *argv[]) {
   
   float *finalImage;
 
-  finalImage = (float *)malloc(imageSize * sizeof(float));
+  finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
   launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth, imageHeight);
+
+  // printf("\nFinal image (shadowless):\n");
+  // print_image(finalImage,imageWidth,imageHeight);
 
   wbImage_delete(inputImage_RGB);
 
