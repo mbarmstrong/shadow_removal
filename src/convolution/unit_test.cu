@@ -8,6 +8,7 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   unsigned char *deviceInputImage;
   float         *deviceOutputImage;
+  float         *deviceOutputImage1;
 
   int imageSize = imageWidth * imageHeight;
   int maskWidth = 3;
@@ -17,6 +18,7 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceInputImage, imageSize * sizeof(unsigned char)) );
   CUDA_CHECK( cudaMalloc((void **)&deviceOutputImage, imageSize * sizeof(float)) );
+  CUDA_CHECK( cudaMalloc((void **)&deviceOutputImage1, imageSize * sizeof(float)) );
   CUDA_CHECK( cudaDeviceSynchronize() );
   wbTime_stop(GPU, "Allocating GPU memory.");
 
@@ -27,8 +29,12 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  dim3 blockDim(8,8), gridDim(1,1);
-  conv2d<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage, maskWidth,
+  dim3 blockDim(6,4), gridDim(1,1);
+  conv_separable_row<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage, maskWidth,
+                                imageWidth, imageHeight);
+
+  dim3 blockDim1(4,6), gridDim1(1,1);
+  conv_separable_col<<<gridDim1, blockDim1>>>(deviceOutputImage, deviceOutputImage1, maskWidth,
                                 imageWidth, imageHeight);
 
   CUDA_CHECK(cudaGetLastError());
@@ -36,7 +42,7 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   //@@ Copy the GPU memory back to the CPU here
   wbTime_start(Copy, "Copying output memory to the CPU");
-  CUDA_CHECK(cudaMemcpy(hostOutputImage, deviceOutputImage,
+  CUDA_CHECK(cudaMemcpy(hostOutputImage, deviceOutputImage1,
                         imageSize * sizeof(float),
                         cudaMemcpyDeviceToHost));
   wbTime_stop(Copy, "Copying output memory to the CPU");

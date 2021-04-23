@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 
   print_pixel(rgbImage,0,0,1,3,imageSize);
 
-  launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth, imageHeight);
+  launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth,imageHeight);
 
   print_pixel(rgbImage,0,0,1,3,imageSize);
 
