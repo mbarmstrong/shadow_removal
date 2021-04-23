@@ -27,6 +27,25 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
   }
 }
 
+
+void print_pixel(unsigned char* image, int row, int col, int channel, int num_channels, int imageSize) {
+
+    printf("\n");
+    int idx = row * imageSize + col;
+    printf("Channel %d, row %d, col %d is:\t%d",channel,row,col,image[idx*num_channels+channel-1]); 
+    printf("\n\n");
+
+}
+
+void print_pixel(float* image, int row, int col, int channel, int num_channels, int imageSize) {
+
+    printf("\n");
+    int idx = row * imageSize + col;
+    printf("Channel %d, row %d, col %d is:\t%.4f",channel,row,col,image[idx*num_channels+channel-1]); 
+    printf("\n\n");
+
+}
+
 void print_image(unsigned char* image, int imageWidth, int imageHeight) {
 
     printf("\n");

@@ -106,10 +106,11 @@ int main(int argc, char *argv[]) {
 
   finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
+  print_pixel(rgbImage,0,0,1,3,imageSize);
+
   launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth, imageHeight);
 
-  // printf("\nFinal image (shadowless):\n");
-  // print_image(finalImage,imageWidth,imageHeight);
+  print_pixel(rgbImage,0,0,1,3,imageSize);
 
   wbImage_delete(inputImage_RGB);
 
@@ -121,6 +122,7 @@ int main(int argc, char *argv[]) {
   free(erodedShadow);
   free(erodedLight);
   free(smoothMask);
+  free(finalImage);
   
   return 0;
 }
