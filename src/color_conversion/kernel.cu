@@ -8,6 +8,10 @@ __global__ void color_convert(float *rgbImage, float *invImage, unsigned char *g
 	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
 	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
 
+    // we want to write back pixels so each channel stores all elements sequentially in mem.
+	// this allows us to easily access a single channel for future processing.
+	int stride = width*height;
+
 	if (col < width && row < height) {	// check boundary condition
 		int idx = row * width + col;   	// mapping 2D to 1D coordinate
 
@@ -22,9 +26,9 @@ __global__ void color_convert(float *rgbImage, float *invImage, unsigned char *g
         float c3 = atan(b / max(r,g));
 
         // store new values in output invariant image
-        invImage[NUM_CHANNELS * idx]     = c1;	// FIXME: check indices
-	    invImage[NUM_CHANNELS * idx + 1] = c2;
-	    invImage[NUM_CHANNELS * idx + 2] = c3;
+        invImage[idx]              = c1;	// FIXME: check indices
+	    invImage[1 * stride + idx] = c2;
+	    invImage[2 * stride + idx] = c3;
 
 	    // calculate invariant to grayscale
 	    // based off matlab function rgb2gray
@@ -44,9 +48,9 @@ __global__ void color_convert(float *rgbImage, float *invImage, unsigned char *g
 	    // float v = (r * 0.439) 	+ (g * -0.368) 	+ (b * -0.071) 	+ 128.0; // red chrominance component
 
 	    // store new values in output YUV image
-	    yuvImage[NUM_CHANNELS * idx]     = y;	// FIXME: check indices
-	    yuvImage[NUM_CHANNELS * idx + 1] = u;
-	    yuvImage[NUM_CHANNELS * idx + 2] = v; 
+	    yuvImage[idx]              = y;	// FIXME: check indices
+	    yuvImage[1 * stride + idx] = u;
+	    yuvImage[2 * stride + idx] = v; 
 
 	}
 }

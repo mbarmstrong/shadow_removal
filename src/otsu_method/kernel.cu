@@ -3,14 +3,13 @@
 
 // shared memory privatized version
 // include comments describing your approach
-__global__ void histogram(float *input, unsigned int *bins,
-                                 unsigned int num_elements,
-                                 unsigned int num_bins) {
+__global__ void histogram(unsigned char *input, unsigned int *bins,
+                                 unsigned int num_elements) {
 
     //init shared memory to zero
     extern __shared__ unsigned int bins_s[];
 
-    for(unsigned int b = threadIdx.x; b < num_bins; b+=blockDim.x) {
+    for(unsigned int b = threadIdx.x; b < NUM_BINS; b+=blockDim.x) {
         bins_s[b] = 0;
     }
 
@@ -25,14 +24,14 @@ __global__ void histogram(float *input, unsigned int *bins,
 
         //convert from floats to uint8
         //TODO: update if other image formats are passed in
-        unsigned char bin = round(input[i] * (256-1));
+        unsigned char bin = input[i];
         atomicAdd(&(bins_s[bin]), 1);
     }
 
     __syncthreads();
 
     //combine all copies of the histogram back in global memory
-    for(unsigned int b = threadIdx.x; b < num_bins; b+=blockDim.x) {
+    for(unsigned int b = threadIdx.x; b < NUM_BINS; b+=blockDim.x) {
         atomicAdd(&(bins[b]), bins_s[b]);
     }
 }
@@ -105,10 +104,33 @@ __global__ void calculate_threshold() {
 
 }
 
+float calculate_threshold_cpu(float *sigmaBsq) {
+
+  float maxSigmaBsq = 0.0;
+  int maxIdx = -1;
+  int count = 0;
+
+  for(int i = 0; i <= NUM_BINS-1; i++)
+  {
+      if(maxSigmaBsq < sigmaBsq[i]){
+        maxSigmaBsq = sigmaBsq[i];
+        maxIdx = i;
+        count = 1;
+      }
+      else if(maxSigmaBsq == sigmaBsq[i]){
+        maxIdx += i;
+        count += 1;
+      }     
+  }
+
+  return (float(maxIdx)/float(count)) / float(NUM_BINS-1);
+
+}
+
 // kernel 6: takes the single-channel input image and threshold and creates a binarized 
 // 			 image based off whether the pixel was less than or greater than the threshold.
 //           image pixels must be in range [0,1]
-__global__ void create_binarized_image(float *inputImage, float *outputImage, float threshold, int width, int height) {
+__global__ void create_binarized_image(unsigned char *inputImage, unsigned char *outputImage, float threshold, int width, int height, bool flipped) {
 
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
 	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
@@ -117,8 +139,17 @@ __global__ void create_binarized_image(float *inputImage, float *outputImage, fl
 
 		int idx = row * width + col;   	// mapping 2D to 1D coordinate
         
-        outputImage[idx] = round(inputImage[idx]-threshold+0.5);  //round to 0 or 1 based on thrshold
-    
+        //convert to float to round between 0 and 1
+        float pixel = (float)inputImage[idx] / (float)(NUM_BINS-1);
+
+        if(flipped){
+          //round to 0 or 1 based on thrshold, then flips all 0s to 1s and vis versa
+          outputImage[idx] = (unsigned char)(1-round(pixel-threshold+0.49999999));
+        }
+        else {
+          //round to 0 or 1 based on thrshold
+          outputImage[idx] = (unsigned char)round(pixel-threshold+0.49999999);
+        }
     }
 
 

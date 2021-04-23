@@ -2,78 +2,116 @@
 #include "kernel.cu"
 #include "../globals.h"
 
-int main(void) {
+void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
-  unsigned char *hostInputImage;
+  unsigned char *hostOutputImage_shadow;
+  unsigned char *hostOutputImage_light;
+
   unsigned char *deviceInputImage;
-  float *hostOutputImage;
-  float *deviceOutputImage;
-  float *hostMask;
-  float *deviceMask;
-  int maskWidth = 1;
-  int imageHeight = 2;
-  int imageWidth = 2;
-  int imageSize = imageHeight*imageWidth;
+  unsigned char *deviceOutputImage_shadow;
+  unsigned char *deviceOutputImage_light;
 
-  hostInputImage = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
-  hostOutputImage = (float *)malloc(imageSize * sizeof(float));
-  hostMask = (float *)malloc(maskWidth * maskWidth * sizeof(float));
+  int imageSize = imageWidth * imageHeight;
+  int maskWidth = 3;
 
-  printf("\n\ninput image:\t");
-  for(int i = 0; i < imageSize; i++){
-    hostInputImage[i] = 1;
-    printf("%d, ", hostInputImage[i]); 
-  }
-  printf("\n\n");
-  
-  printf("\n\nmask:\t");
-  for(int i = 0; i < maskWidth*maskWidth; i++){
-    hostMask[i] = 0.5;
-    printf("%f, ", hostMask[i]); 
-  }
-  printf("\n\n");
+  hostOutputImage_shadow = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
+  hostOutputImage_light = (unsigned char *)malloc(imageSize * sizeof(unsigned char));;
 
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceInputImage, imageSize * sizeof(unsigned char)) );
-  CUDA_CHECK( cudaMalloc((void **)&deviceOutputImage, imageSize * sizeof(float)) );
-  CUDA_CHECK( cudaMalloc((void **)&deviceMask, maskWidth * maskWidth * sizeof(float)) );
+  CUDA_CHECK( cudaMalloc((void **)&deviceOutputImage_shadow, imageSize * sizeof(unsigned char)) );
+  CUDA_CHECK( cudaMalloc((void **)&deviceOutputImage_light, imageSize * sizeof(unsigned char)) );
   CUDA_CHECK( cudaDeviceSynchronize() );
   wbTime_stop(GPU, "Allocating GPU memory.");
 
   //@@ Copy memory to the GPU here
   wbTime_start(GPU, "Copying input memory to the GPU.");
-  CUDA_CHECK(cudaMemcpy(deviceInputImage, hostInputImage,
-                        imageSize * sizeof(unsigned char),
-                        cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(deviceMask, hostMask,
-                        maskWidth * maskWidth * sizeof(float),
+  CUDA_CHECK(cudaMemcpy(deviceInputImage, image, imageSize * sizeof(unsigned char),
                         cudaMemcpyHostToDevice));                        
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  dim3 blockDim1(8,8), gridDim1(1,1);
-  conv2d<<<gridDim1, blockDim1>>>(deviceInputImage, deviceMask, deviceOutputImage,
-                                  maskWidth, imageWidth, imageHeight);
+  dim3 blockDim(8,8), gridDim(1,1);
+  image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
+                                  deviceOutputImage_light, maskWidth, imageWidth, 
+                                  imageHeight);
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
 
   //@@ Copy the GPU memory back to the CPU here
   wbTime_start(Copy, "Copying output memory to the CPU");
-  CUDA_CHECK(cudaMemcpy(hostOutputImage, deviceOutputImage,
-                        imageSize * sizeof(float),
+  CUDA_CHECK(cudaMemcpy(hostOutputImage_shadow, deviceOutputImage_shadow,
+                        imageSize * sizeof(unsigned char),
+                        cudaMemcpyDeviceToHost));
+  CUDA_CHECK(cudaMemcpy(hostOutputImage_light, deviceOutputImage_light,
+                        imageSize * sizeof(unsigned char),
                         cudaMemcpyDeviceToHost));
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
-  printf("\n\noutput image:\t");
-  for(int i = 0; i < imageSize; i++){
-      printf("%.5f, ", hostOutputImage[i]);
-  }
-  printf("\n\n");
+  printf("\noutput image (shadow):\n");
+  print_image(hostOutputImage_shadow,imageWidth,imageHeight);
 
+  printf("\noutput image (light):\n");
+  print_image(hostOutputImage_light,imageWidth,imageHeight);
+  
   CUDA_CHECK(cudaFree(deviceInputImage));
-  CUDA_CHECK(cudaFree(deviceOutputImage));
+  CUDA_CHECK(cudaFree(deviceOutputImage_shadow));
+  CUDA_CHECK(cudaFree(deviceOutputImage_light));
 
-  return 0;
+  free(hostOutputImage_shadow);
+  free(hostOutputImage_light);
+
+}
+
+
+int main(int argc, char *argv[]) {
+  
+  	wbArg_t args;
+  	int imageWidth;
+  	int imageHeight;
+    int imageSize;
+
+  	char *inputImageFile;
+
+  	wbImage_t inputImage_RGB;
+
+    unsigned char* inputImage_RGB_uint8;
+
+  	args = wbArg_read(argc, argv); // parse the input arguments
+
+  	inputImageFile = wbArg_getInputFile(args, 0);
+  	inputImage_RGB = wbImport(inputImageFile);
+
+  	imageWidth = wbImage_getWidth(inputImage_RGB);
+  	imageHeight = wbImage_getHeight(inputImage_RGB);
+
+    imageSize = imageWidth * imageHeight;
+
+    printf("\nRunning erosion unit test on image of %dx%d\n",
+             imageWidth, imageHeight, NUM_CHANNELS);
+
+    //inputImage_RGB_uint8 = (unsigned char*)malloc(imageSize * sizeof(unsigned char));
+
+    // for(int i = 0; i < imageSize; i++){
+    //     inputImage_RGB_uint8[i] = (unsigned char)(round(wbImage_getData(inputImage_RGB)[i*3]));
+    // }
+
+    unsigned char data[16] = {0, 1, 1, 1,
+                              1, 1, 1, 1,
+                              1, 1, 1, 1,
+                              1, 1, 1, 0};
+
+    inputImage_RGB_uint8 = data;
+
+    print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
+
+    unit_test(inputImage_RGB_uint8,imageWidth,imageHeight);
+
+    //free(inputImage_RGB_uint8);
+    wbImage_delete(inputImage_RGB);
+
+    return 0;
+
 }

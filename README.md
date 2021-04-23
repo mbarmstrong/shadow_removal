@@ -1,6 +1,6 @@
 # shadow_removal
 
-## How to build code
+## how to build code
 1. login to the hpc as normal and navigate to your $HOME/ece569 directory
     
     `$ cd ~/ece569`
@@ -23,9 +23,9 @@
     
     `$ make`
    
-## Usefull bash profile setup
+## usefull bash profile setup
 
-Here is Coale's .bashrc file. Your equivalent .bashrc is located in your $HOME directory. I think everyone will find the iteractive session part usefull. To set this up:
+here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME directory. to set this up:
 
 1. go to home directory
 
@@ -40,44 +40,66 @@ Here is Coale's .bashrc file. Your equivalent .bashrc is located in your $HOME d
 1. source the file
 
     `$ source .bashrc`
-1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied.
+1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied
 
 
 ```
 # .bashrc
-
-#Coale's .bashrc
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
         . /etc/bashrc
 fi
 
-# User specific aliases and functions
-module load gcc
-module load cuda91/toolkit/9.1.85
+OS=$(cat /etc/*release | grep CentOS | grep release | grep -o -E '[0-9]\.[0-9]{1,2}'| head -1)
+
+echo "Host is running CentOS release $OS"
 
 bind '"\e[A":history-search-backward'
 bind '"\e[B":history-search-forward'
 
 alias bd="cd /home/u29/cjcoopr/ece569/build_dir"
 
-function isesh {
+#ocelot setup
+if [ "$OS" = "6.10" ]; then
+
+  module load gcc
+  module load cuda91/toolkit/9.1.85
+
+  function isesh {
+
+    echo "reqesting session for $1 min"
+    qsub -I -N add -W group_list=ece569 -q standard -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:$1:00
+  }
+
+#elgato setup
+elif [ "$OS" = "7.9" ]; then
+
+  module load openmpi3
+  module load cuda10
+
+  function isesh {
 
     echo "reqesting session for $1 min"
     qsub -I -N add -W group_list=ece569 -q windfall -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:$1:00
-}
-
+  }
+fi
 ```
 
-## Running an interactive session
+## running an interactive session
 
-1. first add the isesh function to your .bashrc file from the steps above
 1. login to ocelote or elgato
-1. launch the session with the folloiwng command
+2. add the isesh function to your .bashrc file from the steps above
+3. launch the session with the folloiwng command
 
     `$ isesh 5`
    
-   This will connect with a node on the hpc for 5 min but you can specify however much time you'd like. Here you can now launch executables with GPU kernels directly for the command line. For example:
-   
+   this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly for the command line.
+  
+1. to execute the shadow removal solution:
+
    `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
+   
+   or launch the shell script in the pbs scripts folder:
+   
+   `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`
