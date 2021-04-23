@@ -31,6 +31,9 @@ int main(int argc, char *argv[]) {
 
   imageSize = imageWidth * imageHeight;
 
+  int debugPixelRow = 0;
+  int debugPixelCol = 0;
+
   printf("\nRunning shadow removal on image of %dx%d with %d channels\n\n",
           imageWidth, imageHeight, NUM_CHANNELS);
 
@@ -45,6 +48,9 @@ int main(int argc, char *argv[]) {
 
   rgbImage = wbImage_getData(inputImage_RGB);
 
+  printf("\nInital RGB Image:");
+  print_pixel(rgbImage,debugPixelRow,debugPixelCol,1,3,imageSize);
+
   invImage =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
   grayImage = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char));
   yuvImage =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char));
@@ -58,24 +64,45 @@ int main(int argc, char *argv[]) {
   // execute otsu's method
   // using U channel of YUV and grayscale image
   //--------------------------------------------------
+  
   unsigned char *grayMask;
   unsigned char *yuvMask;
   unsigned char *u = yuvImage + 1*imageSize;
   float level = 0.0;
 
+  printf("\nGray Image:");
+  print_pixel(grayImage,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+  printf("\nU Image:");
+  print_pixel(u,debugPixelRow,debugPixelCol,1,1,imageSize);
+
   grayMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
   level = launch_otsu_method(grayImage, imageWidth, imageHeight);
-  launch_image_binarization(grayImage, grayMask, level, imageWidth, imageHeight, false);
+  launch_image_binarization(grayImage, grayMask, level, imageWidth, imageHeight, true);
+
+  printf("\n\nGray Level:\t%.4f\n\n",level);
 
   level = launch_otsu_method(u, imageWidth, imageHeight);
   launch_image_binarization(u, yuvMask, level, imageWidth, imageHeight, false);
+
+  printf("\n\nYUV Level:\t%.4f\n\n",level);
 
   //--------------------------------------------------
   // execute erosion
   //
   //--------------------------------------------------
+  printf("\nGray Mask:");
+  print_pixel(grayMask,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+  unsigned int sum = 0;
+  for(int i = 0; i < imageHeight; i++)
+      for(int j = 0; j < imageWidth; j++)
+         sum += grayMask[i*imageWidth+j];
+
+  printf("\n\nTest Sum of shadow mask:\t%d\n\n",sum);
+
   unsigned char *erodedShadow;
   unsigned char *erodedLight;
   int maskWidth = 5;
@@ -83,12 +110,23 @@ int main(int argc, char *argv[]) {
   erodedShadow = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   erodedLight = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
-  launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight); 
+  launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight);
+
+  sum = 0;
+  for(int i = 0; i < imageHeight; i++)
+      for(int j = 0; j < imageWidth; j++)
+         sum += erodedShadow[i*imageWidth+j];
+
+  printf("\n\nTest Sum of shadow mask:\t%d\n\n",sum);
+      
 
   //--------------------------------------------------
   // execute convolution
   //
   //--------------------------------------------------
+
+  printf("\nYUV Mask:");
+  print_pixel(yuvMask,debugPixelRow,debugPixelCol,1,1,imageSize);
 
   float *smoothMask;
 
@@ -96,21 +134,31 @@ int main(int argc, char *argv[]) {
 
   launch_convolution(yuvMask, smoothMask, maskWidth, imageWidth, imageHeight);
 
+  
+
   //--------------------------------------------------
   //  Execute Result Integration method
   //
   //--------------------------------------------------
   // Result Integration uses original image, gray shadow,gray Light, Eroded shadow, eroded light and smooth mask
+
+  printf("\nShadow Mask:");
+  print_pixel(erodedShadow,debugPixelRow,debugPixelCol,1,1,imageSize);
+  
+  printf("\nLight Mask:");
+  print_pixel(erodedLight,debugPixelRow,debugPixelCol,1,1,imageSize);
+  
+  printf("\nSmooth Mask:");
+  print_pixel(smoothMask,debugPixelRow,debugPixelCol,1,1,imageSize);
   
   float *finalImage;
 
   finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
-  print_pixel(rgbImage,0,0,1,3,imageSize);
-
   launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth,imageHeight);
 
-  print_pixel(rgbImage,0,0,1,3,imageSize);
+  printf("\nFinal Image:");
+  print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageSize);
 
   wbImage_delete(inputImage_RGB);
 
