@@ -1,7 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#define PRINT_DEBUG 0
+#define PRINT_DEBUG 1
 
 #define NUM_CHANNELS 3
 #define NUM_BINS 256

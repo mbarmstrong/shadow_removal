@@ -234,7 +234,7 @@ wbTime_stop(Copy, "Copying output memory to the CPU");
   CUDA_CHECK(cudaFree(deviceBlueLightArray));
   CUDA_CHECK(cudaFree(deviceErodedShadowMask));
   CUDA_CHECK(cudaFree(deviceErodedLightMask));
-  CUDA_CHECK(cudaFree(deviceredRatio));
+  CUDA_CHECK(cudaFree(deviceRedRatio));
   CUDA_CHECK(cudaFree(deviceGreenRatio));
   CUDA_CHECK(cudaFree(deviceBlueRatio));
   CUDA_CHECK(cudaFree(deviceSmoothMask));
