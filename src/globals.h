@@ -7,6 +7,84 @@
 #define NUM_BINS 256
 #define MAX_BLOCK_SZ 1024
 
+#define MAX_LOG_ENTRIES 20
+
+#define LEN(arr) ((int) (sizeof (arr) / sizeof (arr)[0]))
+
+struct st_timerLog_t {
+
+  char kernel_name[MAX_LOG_ENTRIES][50];
+  float time[MAX_LOG_ENTRIES];
+
+  char _header[2][20];
+  int _entry_count;
+  char* _out_file;
+  bool _write_header;
+};
+
+st_timerLog_t timerLog_new(char* outfile) {
+  
+  if (outfile == NULL)
+    printf("\nFile Logging Turned Off\n");
+
+  st_timerLog_t log = {._header = {{"kernel\0"},{"time\0"}},
+                       ._entry_count = 0,
+                       ._out_file = outfile,
+                       ._write_header = true};
+
+  return log;
+
+}
+
+void timerLog_save(st_timerLog_t* log) {
+
+  if(log->_out_file == NULL) {
+    return;
+  }
+
+  FILE *handle;
+
+  if(log->_write_header) {
+    handle = fopen(log->_out_file, "w");
+    for(int i = 0; i < LEN(log->_header); i++) {
+      fprintf(handle, "%s",log->_header[i]);
+      if(i < LEN(log->_header)-1)
+        fprintf(handle, ", ");
+      else
+        fprintf(handle, "\n");
+    }
+
+    log->_write_header = false;
+  }
+  else {
+    handle = fopen(log->_out_file, "a");
+  }
+
+  for(int i = 0; i < log->_entry_count; i++)
+      fprintf(handle, "%s, %f\n",log->kernel_name[i], log->time[i]);
+
+  fflush(handle);
+  fclose(handle);
+
+}
+
+void timerLog_append(st_timerLog_t* log, const char* kernel, float time) {
+
+  int e = log->_entry_count;
+
+  if(e >= MAX_LOG_ENTRIES){
+    timerLog_save(log);
+    log->_entry_count = 0;
+  }
+
+  strcpy(log->kernel_name[e],kernel);
+  log->time[e] = time;
+
+  log->_entry_count++;
+
+}
+
+
 #define wbCheck(stmt)                                                     \
   do {                                                                    \
     cudaError_t err = stmt;                                               \
