@@ -126,15 +126,15 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
   // Calculates the Red, Green and Blue ratios from the sum in Kernel 2 to produce the shadowless image 
   // Uses the RGB ratios produced in Kernel 3 and the input image to remove the shadow and create the final output 
 
-  __global__ void calculate_final_image(float redSumShadowArray, float greenSumShadowArray,float blueSumShadowArray,
-    float redSumLightArray, float greenSumLightArray,float blueSumLightArray,
-    float erodedSumShadowArray,float erodedSumLightArray,
+  __global__ void calculate_final_image(float *redSumShadowArray, float *greenSumShadowArray,float *blueSumShadowArray,
+    float *redSumLightArray, float *greenSumLightArray,float *blueSumLightArray,
+    float *erodedSumShadowArray,float *erodedSumLightArray,
     float *rgbImage, float *smoothMask, float *finalImage,
     int width, int height, int numChannels) {
   
-    float redRatio = (((redSumLightArray/erodedSumLightArray)/(redSumShadowArray/erodedSumShadowArray)) -1);
-    float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
-    float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
+    float redRatio = (float)(((float)(redSumLightArray[0]/erodedSumLightArray[0])/(float)(redSumShadowArray[0]/erodedSumShadowArray[0])) -1);
+    float greenRatio = (float)(((float)(greenSumLightArray[0]/erodedSumLightArray[0])/(float)(greenSumShadowArray[0]/erodedSumShadowArray[0])) -1);
+    float blueRatio = (float)(((float)(blueSumLightArray[0]/erodedSumLightArray[0])/(float)(blueSumShadowArray[0]/erodedSumShadowArray[0])) -1);
   
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
@@ -149,5 +149,57 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
         finalImage[numChannels * idx] = ((redRatio + 1) / ((1 - smoothMask[idx]) * redRatio + 1) * red);
         finalImage[numChannels * idx + 1] = ((greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * green);
         finalImage[numChannels * idx + 2] = ((blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * blue);
+    }
+  }
+
+    __global__ void calculate_final_image_optimised(float *redRatio, float *greenRatio,float *blueRatio,
+    float *rgbImage, float *smoothMask, float *finalImage,
+    int width, int height, int numChannels) {
+  
+    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
+    int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+  
+    if (col < width && row < height) {  // check boundary condition
+        int idx = row * width + col;      // mapping 2D to 1D coordinate
+        // load input RGB values
+        float red = rgbImage[numChannels * idx];      // red component
+        float green = rgbImage[numChannels * idx + 1];  // green component
+        float blue = rgbImage[numChannels * idx + 2];  // blue component
+
+        finalImage[numChannels * idx] = ((redRatio[0] + 1) / ((1 - smoothMask[idx]) * redRatio[0] + 1) * red);
+        finalImage[numChannels * idx + 1] = ((greenRatio[0] + 1) / ((1 - smoothMask[idx]) * greenRatio[0] + 1) * green);
+        finalImage[numChannels * idx + 2] = ((blueRatio[0] + 1) / ((1 - smoothMask[idx]) * blueRatio[0] + 1) * blue);
+    }
+  }
+
+    __global__ void calculate_final_image_stride(float *redSumShadowArray, float *greenSumShadowArray,float *blueSumShadowArray,
+    float *redSumLightArray, float *greenSumLightArray,float *blueSumLightArray,
+    float *erodedSumShadowArray,float *erodedSumLightArray,
+    float *rgbImage, float *smoothMask, float *finalImage,
+    int width, int height, int numChannels) {
+  
+    float redRatio = (float)(((float)(redSumLightArray[0]/erodedSumLightArray[0])/(float)(redSumShadowArray[0]/erodedSumShadowArray[0])) -1);
+    float greenRatio = (float)(((float)(greenSumLightArray[0]/erodedSumLightArray[0])/(float)(greenSumShadowArray[0]/erodedSumShadowArray[0])) -1);
+    float blueRatio = (float)(((float)(blueSumLightArray[0]/erodedSumLightArray[0])/(float)(blueSumShadowArray[0]/erodedSumShadowArray[0])) -1);
+  
+    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
+    int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+
+    int stride = width*height;
+  
+    if (col < width && row < height) {  // check boundary condition
+        int idx = row * width + col;      // mapping 2D to 1D coordinate
+        // load input RGB values
+        float red = rgbImage[numChannels * idx];      // red component
+        float green = rgbImage[numChannels * idx + 1];  // green component
+        float blue = rgbImage[numChannels * idx + 2];  // blue component
+
+        float finalImageRed = ((redRatio + 1) / ((1 - smoothMask[idx]) * redRatio + 1) * red);
+        float finalImageGreen = ((greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * green);
+        float finalImageBlue = ((blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * blue);
+
+        finalImage[idx] = finalImageRed;
+        finalImage[1 * stride + idx] = finalImageGreen;
+        finalImage[2 * stride + idx] = finalImageBlue;
     }
   }
