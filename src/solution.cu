@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   imageSize = imageWidth * imageHeight;
 
   int debugPixelRow = 0;
-  int debugPixelCol = 0;
+  int debugPixelCol = 120;
 
   printf("\nRunning shadow removal on image of %dx%d with %d channels\n\n",
           imageWidth, imageHeight, NUM_CHANNELS);
