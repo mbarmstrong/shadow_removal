@@ -1,6 +1,8 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#define PRINT_DEBUG 0
+
 #define NUM_CHANNELS 3
 #define NUM_BINS 256
 #define MAX_BLOCK_SZ 1024
@@ -33,7 +35,7 @@ void print_pixel(unsigned char* image, int row, int col, int channel, int num_ch
     printf("\n");
     int idx = row * imageSize + col;
     printf("Channel %d, row %d, col %d is:\t%d",channel,row,col,image[idx*num_channels+channel-1]); 
-    printf("\n\n");
+    printf("\n");
 
 }
 
@@ -42,7 +44,7 @@ void print_pixel(float* image, int row, int col, int channel, int num_channels, 
     printf("\n");
     int idx = row * imageSize + col;
     printf("Channel %d, row %d, col %d is:\t%.4f",channel,row,col,image[idx*num_channels+channel-1]); 
-    printf("\n\n");
+    printf("\n");
 
 }
 

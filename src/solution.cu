@@ -31,11 +31,22 @@ int main(int argc, char *argv[]) {
 
   imageSize = imageWidth * imageHeight;
 
+<<<<<<< HEAD
   int debugPixelRow = 0;
   int debugPixelCol = 120;
 
   printf("\nRunning shadow removal on image of %dx%d with %d channels\n\n",
+=======
+  printf("\nRunning shadow removal on image of %dx%d with %d channels...\n",
+>>>>>>> 025ac1dfd84b3c7972e9d4072d1f7b304b49553d
           imageWidth, imageHeight, NUM_CHANNELS);
+
+  cudaEvent_t astartEvent, astopEvent;
+  float aelapsedTime;
+  cudaEventCreate(&astartEvent);
+  cudaEventCreate(&astopEvent);
+
+  cudaEventRecord(astartEvent, 0);
 
   //--------------------------------------------------
   // execute color conversion 
@@ -47,9 +58,6 @@ int main(int argc, char *argv[]) {
   unsigned char *yuvImage;
 
   rgbImage = wbImage_getData(inputImage_RGB);
-
-  printf("\nInital RGB Image:");
-  print_pixel(rgbImage,debugPixelRow,debugPixelCol,1,3,imageSize);
 
   invImage =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
   grayImage = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char));
@@ -64,45 +72,25 @@ int main(int argc, char *argv[]) {
   // execute otsu's method
   // using U channel of YUV and grayscale image
   //--------------------------------------------------
-  
   unsigned char *grayMask;
   unsigned char *yuvMask;
   unsigned char *u = yuvImage + 1*imageSize;
-  float level = 0.0;
-
-  printf("\nGray Image:");
-  print_pixel(grayImage,debugPixelRow,debugPixelCol,1,1,imageSize);
-
-  printf("\nU Image:");
-  print_pixel(u,debugPixelRow,debugPixelCol,1,1,imageSize);
+  float level_gray = 0.0;
+  float level_u = 0.0;
 
   grayMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
-  level = launch_otsu_method(grayImage, imageWidth, imageHeight);
-  launch_image_binarization(grayImage, grayMask, level, imageWidth, imageHeight, true);
+  level_gray = launch_otsu_method(grayImage, imageWidth, imageHeight);
+  launch_image_binarization(grayImage, grayMask, level_gray, imageWidth, imageHeight, true);
 
-  printf("\n\nGray Level:\t%.4f\n\n",level);
-
-  level = launch_otsu_method(u, imageWidth, imageHeight);
-  launch_image_binarization(u, yuvMask, level, imageWidth, imageHeight, false);
-
-  printf("\n\nYUV Level:\t%.4f\n\n",level);
+  level_u = launch_otsu_method(u, imageWidth, imageHeight);
+  launch_image_binarization(u, yuvMask, level_u, imageWidth, imageHeight, false);
 
   //--------------------------------------------------
   // execute erosion
   //
   //--------------------------------------------------
-  printf("\nGray Mask:");
-  print_pixel(grayMask,debugPixelRow,debugPixelCol,1,1,imageSize);
-
-  unsigned int sum = 0;
-  for(int i = 0; i < imageHeight; i++)
-      for(int j = 0; j < imageWidth; j++)
-         sum += grayMask[i*imageWidth+j];
-
-  printf("\n\nTest Sum of shadow mask:\t%d\n\n",sum);
-
   unsigned char *erodedShadow;
   unsigned char *erodedLight;
   int maskWidth = 5;
@@ -112,54 +100,67 @@ int main(int argc, char *argv[]) {
 
   launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight);
 
-  sum = 0;
-  for(int i = 0; i < imageHeight; i++)
-      for(int j = 0; j < imageWidth; j++)
-         sum += erodedShadow[i*imageWidth+j];
-
-  printf("\n\nTest Sum of shadow mask:\t%d\n\n",sum);
-      
-
   //--------------------------------------------------
   // execute convolution
   //
   //--------------------------------------------------
-
-  printf("\nYUV Mask:");
-  print_pixel(yuvMask,debugPixelRow,debugPixelCol,1,1,imageSize);
-
   float *smoothMask;
 
   smoothMask = (float *)malloc(imageSize * sizeof(float));
 
   launch_convolution(yuvMask, smoothMask, maskWidth, imageWidth, imageHeight);
 
-  
-
   //--------------------------------------------------
-  //  Execute Result Integration method
-  //
+  //  Execute Result Integration method -
+  //  using original image, gray shadow,gray Light,
+  //  Eroded shadow, eroded light and smooth mask
   //--------------------------------------------------
-  // Result Integration uses original image, gray shadow,gray Light, Eroded shadow, eroded light and smooth mask
-
-  printf("\nShadow Mask:");
-  print_pixel(erodedShadow,debugPixelRow,debugPixelCol,1,1,imageSize);
-  
-  printf("\nLight Mask:");
-  print_pixel(erodedLight,debugPixelRow,debugPixelCol,1,1,imageSize);
-  
-  printf("\nSmooth Mask:");
-  print_pixel(smoothMask,debugPixelRow,debugPixelCol,1,1,imageSize);
-  
   float *finalImage;
 
   finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
   launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth,imageHeight);
 
-  printf("\nFinal Image:");
-  print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageSize);
+  cudaEventRecord(astopEvent, 0);
+  cudaEventSynchronize(astopEvent);
+  cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
 
+  if (PRINT_DEBUG) {
+
+    int debugPixelRow = 0;
+    int debugPixelCol = 0;
+
+    printf("\nInital RGB Image:");
+    print_pixel(rgbImage,debugPixelRow,debugPixelCol,1,3,imageSize);
+
+    printf("\nGray Image:");
+    print_pixel(grayImage,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+    printf("\nU Image:");
+    print_pixel(u,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+    printf("\n\nGray Level:\t%.4f\n\n",level_gray);
+    printf("\n\nYUV Level:\t%.4f\n\n",level_u);
+
+    printf("\nGray Mask:");
+    print_pixel(grayMask,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+    printf("\nYUV Mask:");
+    print_pixel(yuvMask,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+    printf("\nShadow Mask:");
+    print_pixel(erodedShadow,debugPixelRow,debugPixelCol,1,1,imageSize);
+  
+    printf("\nLight Mask:");
+    print_pixel(erodedLight,debugPixelRow,debugPixelCol,1,1,imageSize);
+  
+    printf("\nSmooth Mask:");
+    print_pixel(smoothMask,debugPixelRow,debugPixelCol,1,1,imageSize);
+
+    printf("\nFinal Image:");
+    print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageSize);
+  }
+  
   wbImage_delete(inputImage_RGB);
 
   free(invImage);
@@ -171,6 +172,8 @@ int main(int argc, char *argv[]) {
   free(erodedLight);
   free(smoothMask);
   free(finalImage);
+
+  printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
   
   return 0;
 }

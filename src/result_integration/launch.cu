@@ -120,6 +120,7 @@ erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize);
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());  
 
+if(PRINT_DEBUG){
   printf("\nSum of Red Shadow Array:\t %.04f",redSumShadowArray);
   printf("\nSum of Green Shadow Array:\t%.04f",greenSumShadowArray);
   printf("\nSum of Blue Shadow Array:\t %.04f",blueSumShadowArray);
@@ -128,6 +129,8 @@ erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize);
   printf("\nSum of Blue Light Array:\t%.04f",blueSumShadowArray);
   printf("\nSum of Eroded  Shadow Array:\t%.04f",erodedSumShadowArray);
   printf("\nSum of Eroded  Light Array:\t%.04f",erodedSumLightArray);
+  printf("\n");
+}
 
   float redRatio = (float)(((float)(redSumLightArray/erodedSumLightArray)/(float)(redSumShadowArray/erodedSumShadowArray)) -1);
   float greenRatio = (float)(((float)(greenSumLightArray/erodedSumLightArray)/(float)(greenSumShadowArray/erodedSumShadowArray)) -1);
