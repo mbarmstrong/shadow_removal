@@ -31,14 +31,7 @@ int main(int argc, char *argv[]) {
 
   imageSize = imageWidth * imageHeight;
 
-<<<<<<< HEAD
-  int debugPixelRow = 0;
-  int debugPixelCol = 120;
-
-  printf("\nRunning shadow removal on image of %dx%d with %d channels\n\n",
-=======
   printf("\nRunning shadow removal on image of %dx%d with %d channels...\n",
->>>>>>> 025ac1dfd84b3c7972e9d4072d1f7b304b49553d
           imageWidth, imageHeight, NUM_CHANNELS);
 
   cudaEvent_t astartEvent, astopEvent;
