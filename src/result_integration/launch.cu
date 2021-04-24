@@ -117,6 +117,7 @@ erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize);
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());  
 
+if(PRINT_DEBUG){
   printf("\nSum of Red Shadow Array:\t %.04f",redSumShadowArray);
   printf("\nSum of Green Shadow Array:\t%.04f",greenSumShadowArray);
   printf("\nSum of Blue Shadow Array:\t %.04f",blueSumShadowArray);
@@ -125,6 +126,8 @@ erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize);
   printf("\nSum of Blue Light Array:\t%.04f",blueSumShadowArray);
   printf("\nSum of Eroded  Shadow Array:\t%.04f",erodedSumShadowArray);
   printf("\nSum of Eroded  Light Array:\t%.04f",erodedSumLightArray);
+  printf("\n");
+}
 
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceFinalImage, imageSize * NUM_CHANNELS * sizeof(float))); 
