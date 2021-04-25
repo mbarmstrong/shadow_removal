@@ -1,27 +1,27 @@
 #include "kernel.cu"
 
-void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
-						  unsigned char *outputImage_Gray, unsigned char* outputImage_YUV,
+void launch_color_convert(unsigned char *inputImage_RGB, float *outputImage_Inv,
+						  float *outputImage_Gray, float *outputImage_YUV,
 						  int imageWidth, int imageHeight, int imageSize) {
 
-  	float *deviceInputImageData_RGB;
+  	unsigned char *deviceInputImageData_RGB;
   	float *deviceOutputImageData_Inv;
-  	unsigned char *deviceOutputImageData_Gray;
-  	unsigned char *deviceOutputImageData_YUV;
+  	float *deviceOutputImageData_Gray;
+  	float *deviceOutputImageData_YUV;
 
   	//@@ Allocate GPU memory here
   	wbTime_start(GPU, "Allocating GPU memory.");
-  	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(unsigned char)));
   	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Inv, imageSize * NUM_CHANNELS * sizeof(float)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(unsigned char)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(unsigned char)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(float)));
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(GPU, "Allocating GPU memory.");
 
   	//@@ Copy memory to the GPU here
   	wbTime_start(GPU, "Copying input memory to the GPU.");
   	CUDA_CHECK(cudaMemcpy(deviceInputImageData_RGB, inputImage_RGB,
-                        imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyHostToDevice));
+                        imageSize * NUM_CHANNELS * sizeof(unsigned char), cudaMemcpyHostToDevice));
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(GPU, "Copying input memory to the GPU.");
 
@@ -39,9 +39,9 @@ void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
   	CUDA_CHECK(cudaMemcpy(outputImage_Inv, deviceOutputImageData_Inv,
                         imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(outputImage_Gray, deviceOutputImageData_Gray,
-                        imageSize * 1 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+                        imageSize * 1 * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(outputImage_YUV, deviceOutputImageData_YUV,
-                        imageSize * NUM_CHANNELS * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+                        imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(Copy, "Copying output memory to the CPU");
 
