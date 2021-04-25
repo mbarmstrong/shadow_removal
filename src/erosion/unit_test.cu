@@ -2,6 +2,27 @@
 #include "kernel.cu"
 #include "../globals.h"
 
+void erosion_kernels(unsigned char* image, unsigned char* shadow, unsigned char* light, int maskWidth,  int imageWidth, int imageHeight, const char* imageid) {
+  int imageSize = imageWidth * imageHeight;
+
+  int n_threads = 16;
+  dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
+  dim3 blockDim(n_threads,n_threads);
+
+  timerLog_startEvent(&timerLog);
+  image_erode_shadow<<<gridDim, blockDim>>>(image, shadow, maskWidth, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "shadow mask", imageid, imageWidth, imageHeight);
+
+  timerLog_startEvent(&timerLog);
+  image_erode_light<<<gridDim, blockDim>>>(image, light, maskWidth, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "light mask", imageid, imageWidth, imageHeight);
+
+  timerLog_startEvent(&timerLog);
+  image_erode<<<gridDim, blockDim>>>(image, shadow, light, maskWidth, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "erosion global memory", imageid, imageWidth, imageHeight);
+
+}
+
 void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   unsigned char *hostOutputImage_shadow;
@@ -31,10 +52,14 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  dim3 blockDim(8,8), gridDim(1,1);
+  int n_threads = 16;
+  dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
+  dim3 blockDim(n_threads,n_threads);
   image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
                                   deviceOutputImage_light, maskWidth, imageWidth, 
                                   imageHeight);
+
+  erosion_kernels(deviceInputImage, deviceOutputImage_shadow, deviceOutputImage_light, maskWidth, imageWidth,imageHeight, "ut");
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
@@ -50,11 +75,11 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
-  printf("\noutput image (shadow):\n");
-  print_image(hostOutputImage_shadow,imageWidth,imageHeight);
+  // printf("\noutput image (shadow):\n");
+  // print_image(hostOutputImage_shadow,imageWidth,imageHeight);
 
-  printf("\noutput image (light):\n");
-  print_image(hostOutputImage_light,imageWidth,imageHeight);
+  // printf("\noutput image (light):\n");
+  // print_image(hostOutputImage_light,imageWidth,imageHeight);
   
   CUDA_CHECK(cudaFree(deviceInputImage));
   CUDA_CHECK(cudaFree(deviceOutputImage_shadow));
@@ -65,7 +90,7 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
 }
 
-
+#ifndef SOLUTION
 int main(int argc, char *argv[]) {
   
   	wbArg_t args;
@@ -80,6 +105,7 @@ int main(int argc, char *argv[]) {
     unsigned char* inputImage_RGB_uint8;
 
   	args = wbArg_read(argc, argv); // parse the input arguments
+    timerLog = timerLog_new( wbArg_getOutputFile(args) );
 
   	inputImageFile = wbArg_getInputFile(args, 0);
   	inputImage_RGB = wbImport(inputImageFile);
@@ -92,26 +118,29 @@ int main(int argc, char *argv[]) {
     printf("\nRunning erosion unit test on image of %dx%d\n",
              imageWidth, imageHeight, NUM_CHANNELS);
 
-    //inputImage_RGB_uint8 = (unsigned char*)malloc(imageSize * sizeof(unsigned char));
+    inputImage_RGB_uint8 = (unsigned char*)malloc(imageSize * sizeof(unsigned char));
 
-    // for(int i = 0; i < imageSize; i++){
-    //     inputImage_RGB_uint8[i] = (unsigned char)(round(wbImage_getData(inputImage_RGB)[i*3]));
-    // }
+    for(int i = 0; i < imageSize; i++){
+        inputImage_RGB_uint8[i] = (unsigned char)(round(wbImage_getData(inputImage_RGB)[i*3]));
+    }
 
-    unsigned char data[16] = {0, 1, 1, 1,
-                              1, 1, 1, 1,
-                              1, 1, 1, 1,
-                              1, 1, 1, 0};
+    // unsigned char data[16] = {0, 1, 1, 1,
+    //                           1, 1, 1, 1,
+    //                           1, 1, 1, 1,
+    //                           1, 1, 1, 0};
 
-    inputImage_RGB_uint8 = data;
+    // inputImage_RGB_uint8 = data;
 
-    print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
+    // print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
 
-    unit_test(inputImage_RGB_uint8,imageWidth,imageHeight);
+    unit_test(inputImage_RGB_uint8, imageWidth, imageHeight);
+
+    timerLog_save(&timerLog);
 
     //free(inputImage_RGB_uint8);
     wbImage_delete(inputImage_RGB);
 
     return 0;
-
 }
+
+#endif

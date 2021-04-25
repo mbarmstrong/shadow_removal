@@ -5,7 +5,8 @@
 void color_conversions(float *rgbImage, float *invImage, unsigned char *grayImage, unsigned char *yuvImage, int imageWidth, int imageHeight, const char* imageid) {
   int imageSize = imageWidth * imageHeight;
 
-  dim3 blockDim(512), gridDim(30);
+  dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
+  dim3 blockDim(16, 16, 1);
 
   timerLog_startEvent(&timerLog);
   convert_rgb_invariant<<<gridDim, blockDim>>>(rgbImage, invImage, imageWidth, imageHeight, 3);
