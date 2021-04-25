@@ -25,6 +25,8 @@ void color_conversions(float *rgbImage, float *invImage, unsigned char *grayImag
   
 } 
 
+#ifndef SOLUTION
+
 int main(int argc, char *argv[]) {
   
   	wbArg_t args;
@@ -138,3 +140,5 @@ int main(int argc, char *argv[]) {
 
   	return 0;
 }
+
+#endif
