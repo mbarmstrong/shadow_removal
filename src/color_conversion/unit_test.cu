@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
   	unsigned char *deviceOutputImageData_YUV;
 
   	args = wbArg_read(argc, argv); // parse the input arguments
+    timerLog = timerLog_new( wbArg_getOutputFile(args) );
 
     // FIXME: generate input image
   	inputImageFile = wbArg_getInputFile(args, 0);
@@ -120,6 +121,8 @@ int main(int argc, char *argv[]) {
   	printf("First 3 values of gray image:   %4d,  %4d,  %4d\n", hostOutputImageData_Gray[0],hostOutputImageData_Gray[1],hostOutputImageData_Gray[2]);
   	printf("First 3 values of yuv image:    %4d,  %4d,  %4d\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
     printf("\n");
+
+    timerLog_save(&timerLog);
 
     //@@ Free the GPU memory here
     wbTime_start(GPU, "Freeing GPU Memory");
