@@ -29,6 +29,9 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     float *deviceBlueSumLightArray;
     float *deviceErodedSumShadowArray;
     float *deviceErodedSumLightArray;
+    float *deviceRedRatio;
+    float *deviceGreenRatio;
+    float *deviceBlueRatio;
     unsigned char *deviceErodedShadowMask;
     unsigned char *deviceErodedLightMask;
     float *deviceSmoothMask;
@@ -129,45 +132,66 @@ erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize);
   printf("\nSum of Eroded  Shadow Array:\t%.04f",erodedSumShadowArray);
   printf("\nSum of Eroded  Light Array:\t%.04f",erodedSumLightArray);
 
+  float redRatio = (((redSumLightArray/erodedSumLightArray)/(redSumShadowArray/erodedSumShadowArray)) -1);
+  float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
+  float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
+  
+  printf("\nredRatio:\t%.04f",redRatio);
+  printf("\ngreenRatio:\t%.04f",greenRatio);
+  printf("\nblueRatio:\t%.04f",blueRatio);
+
+
   wbTime_start(GPU, "Allocating GPU memory.");
-  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumShadowArray, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumShadowArray, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumShadowArray, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceRedSumLightArray, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumLightArray, sizeof(float)));
-  CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumLightArray, sizeof(float))); 
-  CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumLightArray, sizeof(float))); 
-  CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumShadowArray, sizeof(float)));  
+  CUDA_CHECK( cudaMalloc((void **)&deviceRedRatio, sizeof(float)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceGreenRatio, sizeof(float)));   
+  CUDA_CHECK( cudaMalloc((void **)&deviceBlueRatio, sizeof(float)));  
+  // CUDA_CHECK( cudaMalloc((void **)&deviceRedSumShadowArray, sizeof(float)));   
+  // CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumShadowArray, sizeof(float)));   
+  // CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumShadowArray, sizeof(float)));   
+  // CUDA_CHECK( cudaMalloc((void **)&deviceRedSumLightArray, sizeof(float)));   
+  // CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumLightArray, sizeof(float)));
+  // CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumLightArray, sizeof(float))); 
+  // CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumLightArray, sizeof(float))); 
+  // CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumShadowArray, sizeof(float)));  
   CUDA_CHECK(cudaDeviceSynchronize());
   CUDA_CHECK(cudaGetLastError()); 
   wbTime_stop(GPU, "Allocating GPU memory."); 
 
   // Copy the GPU memory back to the CPU here
 wbTime_start(Copy, "Copying host memory to the GPU");
-CUDA_CHECK(cudaMemcpy(deviceRedSumShadowArray, &redSumShadowArray,
+CUDA_CHECK(cudaMemcpy(deviceRedRatio, &redRatio,
                       sizeof(float),
                       cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceGreenSumShadowArray, &greenSumShadowArray,
+CUDA_CHECK(cudaMemcpy(deviceGreenRatio, &greenRatio,
                       sizeof(float),
                       cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceBlueSumShadowArray, &blueSumShadowArray,
+CUDA_CHECK(cudaMemcpy(deviceBlueRatio, &blueRatio,
                       sizeof(float),
                       cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceRedSumLightArray, &redSumLightArray,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceGreenSumLightArray, &greenSumLightArray,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceBlueSumLightArray, &blueSumLightArray,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice)); 
-CUDA_CHECK(cudaMemcpy(deviceErodedSumShadowArray, &erodedSumShadowArray,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));     
-CUDA_CHECK(cudaMemcpy(deviceErodedSumLightArray, &erodedSumLightArray,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));               
+// CUDA_CHECK(cudaMemcpy(deviceRedSumShadowArray, &redSumShadowArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));
+// CUDA_CHECK(cudaMemcpy(deviceGreenSumShadowArray, &greenSumShadowArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));
+// CUDA_CHECK(cudaMemcpy(deviceBlueSumShadowArray, &blueSumShadowArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));
+// CUDA_CHECK(cudaMemcpy(deviceRedSumLightArray, &redSumLightArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));
+// CUDA_CHECK(cudaMemcpy(deviceGreenSumLightArray, &greenSumLightArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));
+// CUDA_CHECK(cudaMemcpy(deviceBlueSumLightArray, &blueSumLightArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice)); 
+// CUDA_CHECK(cudaMemcpy(deviceErodedSumShadowArray, &erodedSumShadowArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));     
+// CUDA_CHECK(cudaMemcpy(deviceErodedSumLightArray, &erodedSumLightArray,
+//                       sizeof(float),
+//                       cudaMemcpyHostToDevice));               
 CUDA_CHECK(cudaDeviceSynchronize());
 wbTime_stop(Copy, "Copying output memory to the CPU");
 
@@ -182,11 +206,9 @@ wbTime_stop(Copy, "Copying output memory to the CPU");
     CUDA_CHECK(cudaMemset(deviceFinalImage, 0.0, imageSize * NUM_CHANNELS * sizeof(float)));
   // Launch calculate_rgb_ratio kernel on the eroded shadow array and calculates the final image
   {
-    dim3 blockDim(8,8,1), gridDim(1,1,1);
-  calculate_final_image<<<gridDim, blockDim>>>(
-  deviceRedSumShadowArray, deviceGreenSumShadowArray,deviceBlueSumShadowArray,
-  deviceRedSumLightArray, deviceGreenSumLightArray,deviceBlueSumLightArray,
-  deviceErodedSumShadowArray,deviceErodedSumLightArray,
+  dim3 gridDim2(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
+  dim3 blockDim2(16, 16, 1);
+  calculate_final_image_stride<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
   deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   imageWidth, imageHeight, NUM_CHANNELS);
     CUDA_CHECK(cudaGetLastError());
