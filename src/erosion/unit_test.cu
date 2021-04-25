@@ -8,8 +8,8 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   unsigned char *hostOutputImage_light;
 
   unsigned char *deviceInputImage;
-  unsigned char *deviceOutputImage_shadow;
-  unsigned char *deviceOutputImage_light;
+  float *deviceOutputImage_shadow;
+  float *deviceOutputImage_light;
 
   int imageSize = imageWidth * imageHeight;
   int maskWidth = 3;
