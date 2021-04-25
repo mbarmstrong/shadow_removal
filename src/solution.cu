@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
   int imageSize;
 
   char *inputImageFile;
+  char *outputImageFile;
 
 	wbImage_t inputImage_RGB;
 
@@ -26,6 +27,7 @@ int main(int argc, char *argv[]) {
   inputImageFile = wbArg_getInputFile(args, 0);
   inputImage_RGB = wbImport(inputImageFile);
 
+  outputImageFile = wbArg_getOutputFile(args);
   imageWidth = wbImage_getWidth(inputImage_RGB);
   imageHeight = wbImage_getHeight(inputImage_RGB);
 
@@ -167,6 +169,11 @@ int main(int argc, char *argv[]) {
   free(finalImage);
 
   printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
+  // char *base_dir = wbPath_join(wbDirectory_current(),"ShadowRemoval");
+
+  // char *output_file_name = wbPath_join(base_dir, "output.ppm");
+  printf("\n %s outputImageFile",outputImageFile);
+  write_data(outputImageFile,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
   
   return 0;
 }
