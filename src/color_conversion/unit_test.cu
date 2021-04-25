@@ -1,6 +1,6 @@
 #include <wb.h>
-#include "../globals.h"
 #include "kernel.cu"
+#include "../globals.h"
 
 void color_conversions(float *rgbImage, float *invImage, unsigned char *grayImage, unsigned char *yuvImage, int imageWidth, int imageHeight, const char* imageid) {
   int imageSize = imageWidth * imageHeight;
