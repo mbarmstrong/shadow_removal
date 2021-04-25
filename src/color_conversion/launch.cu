@@ -25,7 +25,7 @@ void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-    color_conversions(deviceInputImageData_RGB, deviceOutputImageData_Inv, deviceOutputImageData_Gray, deviceOutputImageData_YUV, int imageWidth, int imageHeight, imageid);
+    color_conversions(deviceInputImageData_RGB, deviceOutputImageData_Inv, deviceOutputImageData_Gray, deviceOutputImageData_YUV, imageWidth, imageHeight, imageid);
 
   	// launch kernel
   	dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
