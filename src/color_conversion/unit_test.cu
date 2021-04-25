@@ -2,7 +2,7 @@
 #include "../globals.h"
 #include "kernel.cu"
 
-void color_conversions(float *rgbImage, float *invImage, unsigned char *grayImage, unsigned char *yuvImage, int imageWidth, int imageHeight, const char* imageid) {
+void color_conversions(unsigned char *rgbImage, float *invImage, float *grayImage, float *yuvImage, int imageWidth, int imageHeight, const char* imageid) {
   int imageSize = imageWidth * imageHeight;
 
   dim3 blockDim(512), gridDim(30);
@@ -69,24 +69,24 @@ int main(int argc, char *argv[]) {
 
   	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
 
-    hostOutputImageData_Inv =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(float));  //wbImage_getData(outputImage_Inv);
-  	hostOutputImageData_Gray = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char)); //wbImage_getData(outputImage_Gray);
-  	hostOutputImageData_YUV =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char)); //wbImage_getData(outputImage_YUV);
+    hostOutputImageData_Inv =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));  //wbImage_getData(outputImage_Inv);
+  	hostOutputImageData_Gray = (float *)malloc(imageSize * 1 * sizeof(float)); //wbImage_getData(outputImage_Gray);
+  	hostOutputImageData_YUV =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float)); //wbImage_getData(outputImage_YUV);
 
   	wbTime_start(GPU, "Doing GPU Computation (memory + compute)");
 
     //@@ Allocate GPU memory here
   	wbTime_start(GPU, "Doing GPU memory allocation");
-  	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(unsigned char)));
 	  CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Inv, imageSize * NUM_CHANNELS * sizeof(float)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(unsigned char)));
-  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(unsigned char)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(float)));
+  	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(float)));
   	wbTime_stop(GPU, "Doing GPU memory allocation");
 
     //@@ Copy memory to the GPU here
   	wbTime_start(Copy, "Copying data to the GPU");
   	CUDA_CHECK(cudaMemcpy(deviceInputImageData_RGB, hostInputImageData_RGB,
-            	imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyHostToDevice));
+            	imageSize * NUM_CHANNELS * sizeof(unsigned char), cudaMemcpyHostToDevice));
   	wbTime_stop(Copy, "Copying data to the GPU");
 
   	wbTime_start(Compute, "Doing the computation on the GPU");
@@ -104,9 +104,9 @@ int main(int argc, char *argv[]) {
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_Inv, deviceOutputImageData_Inv,
     		       imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_Gray, deviceOutputImageData_Gray,
-    		       imageSize * 1 * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+    		       imageSize * 1 * sizeof(float), cudaMemcpyDeviceToHost));
   	CUDA_CHECK(cudaMemcpy(hostOutputImageData_YUV, deviceOutputImageData_YUV,
-    		       imageSize * NUM_CHANNELS * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+    		       imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyDeviceToHost));
   	wbTime_stop(Copy, "Copying data from the GPU");
 
   	wbTime_stop(GPU, "Doing GPU Computation (memory + compute)");
