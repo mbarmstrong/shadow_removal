@@ -2,6 +2,24 @@
 #include "kernel.cu"
 #include "../globals.h"
 
+void erosion_kernels(unsigned char* image, unsigned char* shadow, unsigned char* light, int maskWidth,  int imageWidth, int imageHeight, const char* imageid) {
+  int imageSize = imageWidth * imageHeight;
+  dim3 blockDim(512), gridDim(30);
+
+  timerLog_startEvent(&timerLog);
+  image_erode_shadow<<<gridDim, blockDim>>>(image, shadow, maskWidth, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "shadow mask", imageid, imageWidth, imageHeight);
+
+  timerLog_startEvent(&timerLog);
+  image_erode_light<<<gridDim, blockDim>>>(image, light, maskWidth, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "light mask", imageid, imageWidth, imageHeight);
+
+  timerLog_startEvent(&timerLog);
+  image_erode<<<gridDim, blockDim>>>(image, shadow, light, maskWidth, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "erosion global memory", imageid, imageWidth, imageHeight);
+
+}
+
 void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   unsigned char *hostOutputImage_shadow;
@@ -31,10 +49,10 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  dim3 blockDim(8,8), gridDim(1,1);
-  image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
-                                  deviceOutputImage_light, maskWidth, imageWidth, 
-                                  imageHeight);
+  // dim3 blockDim(8,8), gridDim(1,1);
+  // image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
+  //                                 deviceOutputImage_light, maskWidth, imageWidth, 
+  //                                 imageHeight);
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
@@ -55,6 +73,8 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   printf("\noutput image (light):\n");
   print_image(hostOutputImage_light,imageWidth,imageHeight);
+
+  timerLog_save(&timerLog);
   
   CUDA_CHECK(cudaFree(deviceInputImage));
   CUDA_CHECK(cudaFree(deviceOutputImage_shadow));
@@ -65,7 +85,7 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
 }
 
-
+#ifndef SOLUTION
 int main(int argc, char *argv[]) {
   
   	wbArg_t args;
@@ -80,6 +100,7 @@ int main(int argc, char *argv[]) {
     unsigned char* inputImage_RGB_uint8;
 
   	args = wbArg_read(argc, argv); // parse the input arguments
+    timerLog = timerLog_new( wbArg_getOutputFile(args) );
 
   	inputImageFile = wbArg_getInputFile(args, 0);
   	inputImage_RGB = wbImport(inputImageFile);
@@ -113,5 +134,6 @@ int main(int argc, char *argv[]) {
     wbImage_delete(inputImage_RGB);
 
     return 0;
-
 }
+
+#endif
