@@ -75,11 +75,11 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
-  printf("\noutput image (shadow):\n");
-  print_image(hostOutputImage_shadow,imageWidth,imageHeight);
+  // printf("\noutput image (shadow):\n");
+  // print_image(hostOutputImage_shadow,imageWidth,imageHeight);
 
-  printf("\noutput image (light):\n");
-  print_image(hostOutputImage_light,imageWidth,imageHeight);
+  // printf("\noutput image (light):\n");
+  // print_image(hostOutputImage_light,imageWidth,imageHeight);
   
   CUDA_CHECK(cudaFree(deviceInputImage));
   CUDA_CHECK(cudaFree(deviceOutputImage_shadow));
