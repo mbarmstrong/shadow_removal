@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   	//outputImage_Gray = wbImage_new(imageWidth, imageHeight, 1);
   	//outputImage_YUV = wbImage_new(imageWidth, imageHeight, NUM_CHANNELS);
 
-  	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
+  	hostInputImageData_RGB = (unsigned char)(wbImage_getData(inputImage_RGB));
 
     hostOutputImageData_Inv =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));  //wbImage_getData(outputImage_Inv);
   	hostOutputImageData_Gray = (float *)malloc(imageSize * 1 * sizeof(float)); //wbImage_getData(outputImage_Gray);
