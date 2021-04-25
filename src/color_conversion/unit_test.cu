@@ -39,15 +39,15 @@ int main(int argc, char *argv[]) {
   	//wbImage_t outputImage_Gray;
     //wbImage_t outputImage_YUV;
 
-  	float *hostInputImageData_RGB;
+  	unsigned char *hostInputImageData_RGB;
   	float *hostOutputImageData_Inv;
-  	unsigned char *hostOutputImageData_Gray;
-  	unsigned char *hostOutputImageData_YUV;
+  	float *hostOutputImageData_Gray;
+  	float *hostOutputImageData_YUV;
 
-  	float *deviceInputImageData_RGB;
+  	unsigned char *deviceInputImageData_RGB;
   	float *deviceOutputImageData_Inv;
-  	unsigned char *deviceOutputImageData_Gray;
-  	unsigned char *deviceOutputImageData_YUV;
+  	float *deviceOutputImageData_Gray;
+  	float *deviceOutputImageData_YUV;
 
   	args = wbArg_read(argc, argv); // parse the input arguments
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 
   	hostInputImageData_RGB = wbImage_getData(inputImage_RGB);
 
-    hostOutputImageData_Inv =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));  //wbImage_getData(outputImage_Inv);
+    hostOutputImageData_Inv =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(float));  //wbImage_getData(outputImage_Inv);
   	hostOutputImageData_Gray = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char)); //wbImage_getData(outputImage_Gray);
   	hostOutputImageData_YUV =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char)); //wbImage_getData(outputImage_YUV);
 
