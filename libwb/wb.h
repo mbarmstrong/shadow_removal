@@ -68,7 +68,7 @@
 #ifdef WB_USE_COURSERA
 #define wbLogger_printOnExit 1
 #else /* WB_USE_COURSERA */
-#define wbLogger_printOnLog 0
+#define wbLogger_printOnLog 1
 #endif /* WB_USE_COURSERA */
 
 /***********************************************************/

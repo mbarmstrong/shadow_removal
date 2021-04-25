@@ -2,80 +2,41 @@
 #include <wb.h>
 #include "kernel.cu"
 #include "histo.cu"
+#include "histo_thrust.cu"
 #include "../globals.h"
 
 st_timerLog_t timerLog;
 
-void histograms(unsigned char* deviceImage, unsigned int* deviceBins, int imageSize) {
+void histograms(unsigned char* deviceImage, unsigned int* deviceBins, int imageWidth, int imageHeight) {
 
-  cudaEvent_t astartEvent, astopEvent;
-  float aelapsedTime;
-  cudaEventCreate(&astartEvent);
-  cudaEventCreate(&astopEvent);
-  
-  // Launch histogram kernel on the bins
+  int imageSize = imageWidth * imageHeight;
+
   dim3 blockDim(512), gridDim(30);
 
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
-  cudaEventRecord(astartEvent, 0);
-  wbTime_start(GPU, "Running global histogram");
+  timerLog_startEvent(&timerLog);
   histogram_global_kernel<<<gridDim, blockDim, NUM_BINS * sizeof(unsigned int)>>>(
       deviceImage, deviceBins, imageSize);
-  //CUDA_CHECK(cudaGetLastError());
-  //CUDA_CHECK(cudaDeviceSynchronize());
-  wbTime_stop(GPU, "Running global histogram");
-  cudaEventRecord(astopEvent, 0);
-  cudaEventSynchronize(astopEvent);
-  cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-  printf("\n");
-  printf("Total compute time (ms) %f\n",aelapsedTime);
-  printf("\n");
-  timerLog_append(&timerLog,"histogram global",aelapsedTime);
+  timerLog_stopEventAndLog(&timerLog, "histogram global", imageWidth, imageHeight);
   
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
-  cudaEventRecord(astartEvent, 0);
+  timerLog_startEvent(&timerLog);
   histogram_shared_kernel<<<gridDim, blockDim, NUM_BINS * sizeof(unsigned int)>>>(
       deviceImage, deviceBins, imageSize);
-  CUDA_CHECK(cudaGetLastError());
-  CUDA_CHECK(cudaDeviceSynchronize());
-  cudaEventRecord(astopEvent, 0);
-  cudaEventSynchronize(astopEvent);
-  cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-  printf("\n");
-  printf("Total compute time (ms) %f\n",aelapsedTime);
-  printf("\n");
-  timerLog_append(&timerLog,"histogram shared",aelapsedTime);
+  timerLog_stopEventAndLog(&timerLog, "histogram shared", imageWidth, imageHeight);
 
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
-  cudaEventRecord(astartEvent, 0);
+  timerLog_startEvent(&timerLog);
   histogram_shared_accumulate_kernel<<<gridDim, blockDim, NUM_BINS * sizeof(unsigned int)>>>(
       deviceImage, deviceBins, imageSize);
-  CUDA_CHECK(cudaGetLastError());
-  CUDA_CHECK(cudaDeviceSynchronize());
-  cudaEventRecord(astopEvent, 0);
-  cudaEventSynchronize(astopEvent);
-  cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-  printf("\n");
-  printf("Total compute time (ms) %f\n",aelapsedTime);
-  printf("\n");
-  timerLog_append(&timerLog,"histogram shared accumulate",aelapsedTime);
+  timerLog_stopEventAndLog(&timerLog,"histogram shared accumulate", imageWidth, imageHeight);
 
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
-  cudaEventRecord(astartEvent, 0);
-  wbTime_start(GPU, "Running R histogram");
+  timerLog_startEvent(&timerLog);
   int shared_size = (NUM_BINS+1) * 12 * sizeof(unsigned int);
   histogram_shared_R_kernel<<<gridDim, blockDim, shared_size>>>(
         deviceImage, deviceBins, imageSize, 12);
-  //CUDA_CHECK(cudaGetLastError());
-  //CUDA_CHECK(cudaDeviceSynchronize());
-  wbTime_stop(GPU, "Running R histogram");
-  cudaEventRecord(astopEvent, 0);
-  cudaEventSynchronize(astopEvent);
-  cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-  printf("\n");
-  printf("Total compute time (ms) %f\n",aelapsedTime);
-  printf("\n");
-  timerLog_append(&timerLog,"histogram shared R",aelapsedTime);
+  timerLog_stopEventAndLog(&timerLog,"histogram shared R", imageWidth, imageHeight);
 
 }
 
@@ -103,7 +64,8 @@ float unit_test(unsigned char* image, int imageWidth, int imageHeight) {
                         imageSize * sizeof(unsigned char),
                         cudaMemcpyHostToDevice));
 
-  histograms(deviceImage, deviceBins, imageSize);
+  histograms(deviceImage, deviceBins, imageWidth, imageHeight);
+  histo_thrust(image, hostBins, imageWidth, imageHeight, &timerLog);
 
   //@@ Copy the GPU memory back to the CPU here
   CUDA_CHECK(cudaMemcpy(hostBins, deviceBins,
