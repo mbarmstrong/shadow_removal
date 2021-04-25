@@ -84,7 +84,7 @@ __global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int wid
 
 // individual kernel -- invariant to grayscale
 // not used
-__global__ void convert_invariant_grayscale(float *invImage, float *grayImage, int width, int height, int num_channels) {
+__global__ void convert_invariant_grayscale(float *invImage, unsigned char *grayImage, int width, int height, int num_channels) {
   
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
@@ -104,7 +104,7 @@ __global__ void convert_invariant_grayscale(float *invImage, float *grayImage, i
 
 // individual kernel -- RGB to YUV
 // not used
-__global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int height, int num_channels) {
+__global__ void convert_rgb_yuv(float *rgbImage, unsigned char *yuvImage, int width, int height, int num_channels) {
 
   	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
   	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
