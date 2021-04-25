@@ -30,7 +30,7 @@ struct st_timerLog_t {
   float _elapsed_time;
 };
 
-st_timerLog_t timerLog_new(char* outfile) {
+/*st_timerLog_t timerLog_new(char* outfile) {
   
   if (outfile == NULL)
     printf("\nFile Logging Turned Off\n");
@@ -43,7 +43,7 @@ st_timerLog_t timerLog_new(char* outfile) {
 
   return log;
 
-}
+}*/
 
 void timerLog_save(st_timerLog_t* log) {
 
@@ -195,6 +195,25 @@ void print_step_array(float* arr, int size) {
     if(arr[i] != arr[i-1]) printf("%d-%.4f, ",i, arr[i]);
   }
   printf("\n\n");
+}
+
+void write_data(char *file_name, float *data,
+                       int width, int height,
+                       int channels) {                       
+  FILE *handle = fopen(file_name, "w");
+  if (channels == 1) {
+    fprintf(handle, "P5\n");
+  } else {
+    fprintf(handle, "P6\n");
+  }
+  fprintf(handle, "#Created by %s\n", __FILE__);
+  fprintf(handle, "%d %d\n", width, height);
+  fprintf(handle, "255\n");
+
+  fwrite(data, width * channels * sizeof(float), height, handle);
+
+  fflush(handle);
+  fclose(handle);
 }
 
 #endif

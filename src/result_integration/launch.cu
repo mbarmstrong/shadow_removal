@@ -40,6 +40,12 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   
     int imageSize = imageHeight * imageWidth;
     int n_threads = 16;
+
+    cudaEvent_t astartEvent1, astopEvent1;
+    float aelapsedTime1;
+    cudaEventCreate(&astartEvent1);
+    cudaEventCreate(&astopEvent1);
+
   
     wbTime_start(GPU, "Allocating GPU memory.");
     CUDA_CHECK(cudaMalloc((void **)&deviceRgbImage, imageSize * NUM_CHANNELS * sizeof(float)));
@@ -72,18 +78,32 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   
     dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads),1);
     dim3 blockDim(n_threads,n_threads,1);
+    cudaEventRecord(astartEvent1, 0);
     multiply_rgbImage_byMask<<<gridDim, blockDim>>>(
       deviceRgbImage, deviceErodedShadowMask, 
       deviceErodedLightMask, deviceRedShadowArray,deviceGreenShadowArray,deviceBlueShadowArray,
       deviceRedLightArray,deviceGreenLightArray,deviceBlueLightArray,imageWidth,imageHeight, NUM_CHANNELS);
+    cudaEventRecord(astopEvent1, 0);
+    cudaEventSynchronize(astopEvent1);
+    cudaEventElapsedTime(&aelapsedTime1, astartEvent1, astopEvent1);  
+
+    printf("\nDone! Total Execution Time for Result Integration Kernel1 (ms):\t%f\n\n",aelapsedTime1);
+
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
  // Launch sum_up_arrays kernel on the light and shadow arrays for each channel
   // dim3 gridDim2(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads),1);
   // dim3 blockDim2(32,32,1);
-
+  cudaEventRecord(astartEvent1, 0);
   redSumShadowArray = gpu_sum_reduce(deviceRedShadowArray, imageSize);
+
+  cudaEventRecord(astopEvent1, 0);
+  cudaEventSynchronize(astopEvent1);
+  cudaEventElapsedTime(&aelapsedTime1, astartEvent1, astopEvent1);  
+
+  printf("\nDone! Total Execution Time for Result Integration Kernel2 (ms):\t%f\n\n",aelapsedTime1);
+
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -205,12 +225,19 @@ wbTime_stop(Copy, "Copying output memory to the CPU");
   // deviceErodedSumShadowArray,deviceErodedSumLightArray,
   // deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   // imageWidth, imageHeight, NUM_CHANNELS);
-  calculate_final_image_optimised<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
+  cudaEventRecord(astartEvent1, 0);
+  calculate_final_image_stride<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
   deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   imageWidth, imageHeight, NUM_CHANNELS);
+   
+  cudaEventRecord(astopEvent1, 0);
+  cudaEventSynchronize(astopEvent1);
+  cudaEventElapsedTime(&aelapsedTime1, astartEvent1, astopEvent1);  
+
+  printf("\nDone! Total Execution Time for Result Integration Kernel3 (ms):\t%f\n\n",aelapsedTime1);
+
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
-   
 
   //@@ Copy the GPU memory back to the CPU here
   wbTime_start(Copy, "Copying output memory to the CPU");
