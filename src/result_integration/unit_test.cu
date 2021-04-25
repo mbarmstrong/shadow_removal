@@ -21,14 +21,6 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     float *deviceRedLightArray;
     float *deviceGreenLightArray;
     float *deviceBlueLightArray;
-    float *deviceRedSumShadowArray;
-    float *deviceGreenSumShadowArray;
-    float *deviceBlueSumShadowArray;
-    float *deviceRedSumLightArray; 
-    float *deviceGreenSumLightArray;
-    float *deviceBlueSumLightArray;
-    float *deviceErodedSumShadowArray;
-    float *deviceErodedSumLightArray;
     float *deviceRedRatio;
     float *deviceGreenRatio;
     float *deviceBlueRatio;
@@ -144,15 +136,7 @@ erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize);
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceRedRatio, sizeof(float)));   
   CUDA_CHECK( cudaMalloc((void **)&deviceGreenRatio, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceBlueRatio, sizeof(float)));  
-  // CUDA_CHECK( cudaMalloc((void **)&deviceRedSumShadowArray, sizeof(float)));   
-  // CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumShadowArray, sizeof(float)));   
-  // CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumShadowArray, sizeof(float)));   
-  // CUDA_CHECK( cudaMalloc((void **)&deviceRedSumLightArray, sizeof(float)));   
-  // CUDA_CHECK( cudaMalloc((void **)&deviceGreenSumLightArray, sizeof(float)));
-  // CUDA_CHECK( cudaMalloc((void **)&deviceBlueSumLightArray, sizeof(float))); 
-  // CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumLightArray, sizeof(float))); 
-  // CUDA_CHECK( cudaMalloc((void **)&deviceErodedSumShadowArray, sizeof(float)));  
+  CUDA_CHECK( cudaMalloc((void **)&deviceBlueRatio, sizeof(float)));   
   CUDA_CHECK(cudaDeviceSynchronize());
   CUDA_CHECK(cudaGetLastError()); 
   wbTime_stop(GPU, "Allocating GPU memory."); 
@@ -167,31 +151,7 @@ CUDA_CHECK(cudaMemcpy(deviceGreenRatio, &greenRatio,
                       cudaMemcpyHostToDevice));
 CUDA_CHECK(cudaMemcpy(deviceBlueRatio, &blueRatio,
                       sizeof(float),
-                      cudaMemcpyHostToDevice));
-// CUDA_CHECK(cudaMemcpy(deviceRedSumShadowArray, &redSumShadowArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));
-// CUDA_CHECK(cudaMemcpy(deviceGreenSumShadowArray, &greenSumShadowArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));
-// CUDA_CHECK(cudaMemcpy(deviceBlueSumShadowArray, &blueSumShadowArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));
-// CUDA_CHECK(cudaMemcpy(deviceRedSumLightArray, &redSumLightArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));
-// CUDA_CHECK(cudaMemcpy(deviceGreenSumLightArray, &greenSumLightArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));
-// CUDA_CHECK(cudaMemcpy(deviceBlueSumLightArray, &blueSumLightArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice)); 
-// CUDA_CHECK(cudaMemcpy(deviceErodedSumShadowArray, &erodedSumShadowArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));     
-// CUDA_CHECK(cudaMemcpy(deviceErodedSumLightArray, &erodedSumLightArray,
-//                       sizeof(float),
-//                       cudaMemcpyHostToDevice));               
+                      cudaMemcpyHostToDevice));            
 CUDA_CHECK(cudaDeviceSynchronize());
 wbTime_stop(Copy, "Copying output memory to the CPU");
 

@@ -14,7 +14,6 @@ void block_sum_reduce(float* const d_block_sums,
 {
 	extern __shared__ float s_out[];
 
-	unsigned int max_elems_per_block = blockDim.x * 2;
 	unsigned int glbl_tid = blockDim.x * blockIdx.x + threadIdx.x;
 	unsigned int tid = threadIdx.x;
 	
@@ -53,7 +52,6 @@ void block_sum_reduce(float* const d_block_sums,
 {
 	extern __shared__ float s_out[];
 
-	unsigned int max_elems_per_block = blockDim.x * 2;
 	unsigned int glbl_tid = blockDim.x * blockIdx.x + threadIdx.x;
 	unsigned int tid = threadIdx.x;
 	
