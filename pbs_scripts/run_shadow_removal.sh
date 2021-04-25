@@ -13,5 +13,5 @@ OUTDIR=$HOME/ece569/shadow_removal/output;
 #fi
 
 
-$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/gf.ppm -o $OUTDIR/output.ppm -t image
+$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/gf.ppm -t image
 

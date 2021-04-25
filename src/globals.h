@@ -22,7 +22,7 @@ struct st_timerLog_t {
   bool _write_header;
 };
 
-st_timerLog_t timerLog_new(char* outfile) {
+/*st_timerLog_t timerLog_new(char* outfile) {
   
   if (outfile == NULL)
     printf("\nFile Logging Turned Off\n");
@@ -34,7 +34,7 @@ st_timerLog_t timerLog_new(char* outfile) {
 
   return log;
 
-}
+}*/
 
 void timerLog_save(st_timerLog_t* log) {
 

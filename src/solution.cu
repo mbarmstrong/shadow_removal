@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   int imageSize;
 
   char *inputImageFile;
-  char *outputImageFile;
+  //char *outputImageFile;
 
 	wbImage_t inputImage_RGB;
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   inputImageFile = wbArg_getInputFile(args, 0);
   inputImage_RGB = wbImport(inputImageFile);
 
-  outputImageFile = wbArg_getOutputFile(args);
+  //outputImageFile = wbArg_getOutputFile(args);
   imageWidth = wbImage_getWidth(inputImage_RGB);
   imageHeight = wbImage_getHeight(inputImage_RGB);
 
@@ -158,6 +158,17 @@ int main(int argc, char *argv[]) {
   
   wbImage_delete(inputImage_RGB);
 
+
+  printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
+  const char *base_dir =
+      wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
+  const char *dir_name =
+      wbDirectory_create(wbPath_join(base_dir, "output"));
+
+  char *output_file_name = wbPath_join(dir_name, "output.ppm");
+  write_data(output_file_name,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
+
+
   free(invImage);
   free(grayImage);
   free(yuvImage);
@@ -167,13 +178,6 @@ int main(int argc, char *argv[]) {
   free(erodedLight);
   free(smoothMask);
   free(finalImage);
-
-  printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
-  // char *base_dir = wbPath_join(wbDirectory_current(),"ShadowRemoval");
-
-  // char *output_file_name = wbPath_join(base_dir, "output.ppm");
-  printf("\n %s outputImageFile",outputImageFile);
-  write_data(outputImageFile,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
   
   return 0;
 }
