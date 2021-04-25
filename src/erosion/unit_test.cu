@@ -118,22 +118,22 @@ int main(int argc, char *argv[]) {
     printf("\nRunning erosion unit test on image of %dx%d\n",
              imageWidth, imageHeight, NUM_CHANNELS);
 
-    // inputImage_RGB_uint8 = (unsigned char*)malloc(imageSize * sizeof(unsigned char));
+    inputImage_RGB_uint8 = (unsigned char*)malloc(imageSize * sizeof(unsigned char));
 
-    // for(int i = 0; i < imageSize; i++){
-    //     inputImage_RGB_uint8[i] = (unsigned char)(round(wbImage_getData(inputImage_RGB)[i*3]));
-    // }
+    for(int i = 0; i < imageSize; i++){
+        inputImage_RGB_uint8[i] = (unsigned char)(round(wbImage_getData(inputImage_RGB)[i*3]));
+    }
 
-    unsigned char data[16] = {0, 1, 1, 1,
-                              1, 1, 1, 1,
-                              1, 1, 1, 1,
-                              1, 1, 1, 0};
+    // unsigned char data[16] = {0, 1, 1, 1,
+    //                           1, 1, 1, 1,
+    //                           1, 1, 1, 1,
+    //                           1, 1, 1, 0};
 
-    inputImage_RGB_uint8 = data;
+    // inputImage_RGB_uint8 = data;
 
     // print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
 
-    unit_test(data,imageWidth,imageHeight);
+    unit_test(inputImage_RGB_uint8, imageWidth, imageHeight);
 
     timerLog_save(&timerLog);
 
