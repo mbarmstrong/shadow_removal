@@ -30,7 +30,7 @@ struct st_timerLog_t {
   float _elapsed_time;
 };
 
-/*st_timerLog_t timerLog_new(char* outfile) {
+st_timerLog_t timerLog_new(char* outfile) {
   
   if (outfile == NULL)
     printf("\nFile Logging Turned Off\n");
@@ -43,7 +43,7 @@ struct st_timerLog_t {
 
   return log;
 
-}*/
+}
 
 void timerLog_save(st_timerLog_t* log) {
 
