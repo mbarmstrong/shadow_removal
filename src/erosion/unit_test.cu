@@ -4,6 +4,7 @@
 
 void erosion_kernels(unsigned char* image, unsigned char* shadow, unsigned char* light, int maskWidth,  int imageWidth, int imageHeight, const char* imageid) {
   int imageSize = imageWidth * imageHeight;
+
   int n_threads = 16;
   dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
   dim3 blockDim(n_threads,n_threads);
@@ -51,10 +52,12 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  // dim3 blockDim(8,8), gridDim(1,1);
-  // image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
-  //                                 deviceOutputImage_light, maskWidth, imageWidth, 
-  //                                 imageHeight);
+  int n_threads = 16;
+  dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
+  dim3 blockDim(n_threads,n_threads);
+  image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
+                                  deviceOutputImage_light, maskWidth, imageWidth, 
+                                  imageHeight);
 
   erosion_kernels(deviceInputImage, deviceOutputImage_shadow, deviceOutputImage_light, maskWidth, imageWidth,imageHeight, "ut");
 
@@ -77,8 +80,6 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   printf("\noutput image (light):\n");
   print_image(hostOutputImage_light,imageWidth,imageHeight);
-
-  timerLog_save(&timerLog);
   
   CUDA_CHECK(cudaFree(deviceInputImage));
   CUDA_CHECK(cudaFree(deviceOutputImage_shadow));
