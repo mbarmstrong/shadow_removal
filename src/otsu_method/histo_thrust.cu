@@ -1,4 +1,7 @@
 
+#ifndef __HISTO_THRUST__
+#define __HISTO_THRUST__
+
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
@@ -33,7 +36,7 @@ template<typename T>
  }; // end set_equal_127
 
 
-void histo_thrust(unsigned char * hostInput, unsigned int * hostBins, int imageWidth, int imageHeight, st_timerLog_t* timerLog) {
+void histo_thrust(unsigned char * hostInput, int imageWidth, int imageHeight, const char* imageid) {
 
     unsigned int *binwidths;
     int inputLength = imageWidth * imageHeight;
@@ -48,7 +51,7 @@ void histo_thrust(unsigned char * hostInput, unsigned int * hostBins, int imageW
     thrust::device_vector<unsigned int>binwidths_thrust(binwidths, binwidths + NUM_BINS);
     thrust::device_vector<unsigned int>bins_thrust(NUM_BINS);
 
-    timerLog_startEvent(timerLog);
+    timerLog_startEvent(&timerLog);
 
     thrust::sort(thrust::device,input_thrust.begin(),input_thrust.end());
 
@@ -65,8 +68,10 @@ void histo_thrust(unsigned char * hostInput, unsigned int * hostBins, int imageW
     greater_127<unsigned int>pred;
     thrust::transform_if(bins_thrust.begin(), bins_thrust.end(), bins_thrust.begin(), op, pred);
 
-    timerLog_stopEventAndLog(timerLog, "sort and reduce by key", imageWidth, imageHeight);
+    timerLog_stopEventAndLog(&timerLog, "sort and reduce by key", imageid, imageWidth, imageHeight);
 
-    thrust::copy(bins_thrust.begin(), bins_thrust.end(), hostBins);
+    //thrust::copy(bins_thrust.begin(), bins_thrust.end(), hostBins);
 
 }
+
+#endif

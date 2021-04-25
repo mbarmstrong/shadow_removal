@@ -1,3 +1,6 @@
+#ifndef __OTSU_KERNEL__
+#define __OTSU_KERNEL__
+
 
 #include "../globals.h"
 
@@ -119,3 +122,5 @@ __global__ void create_binarized_image(unsigned char *inputImage, unsigned char 
 
 
 }
+
+#endif
