@@ -20,7 +20,7 @@ struct st_timerLog_t {
   int height[MAX_LOG_ENTRIES];
   float time[MAX_LOG_ENTRIES];
 
-  char _header[4][20];
+  char _header[5][20];
   int _entry_count;
   char* _out_file;
   bool _write_header;
@@ -36,7 +36,12 @@ st_timerLog_t timerLog_new(char* outfile) {
   if (outfile == NULL)
     printf("\nFile Logging Turned Off\n");
 
-  st_timerLog_t log = {._header = {{"kernel\0"},{"width\0"},{"height\0"},{"time (ms)\0"}},
+  st_timerLog_t log = {.kernel_name = {{}},
+                       .image_id = {{}},
+                       .width = {},
+                       .height = {},
+                       .time = {},
+                       ._header = {{"kernel\0"},{"width\0"},{"height\0"},{"time (ms)\0"}},
                        ._entry_count = 0,
                        ._out_file = outfile,
                        ._write_header = true,

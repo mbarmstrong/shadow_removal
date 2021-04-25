@@ -36,7 +36,7 @@ void histograms(unsigned char* deviceImage, unsigned int* deviceBins, int imageW
   int shared_size = (NUM_BINS) * 12 * sizeof(unsigned int);
   histogram_shared_R_nopad_kernel<<<gridDim, blockDim, shared_size>>>(
         deviceImage, deviceBins, imageSize, 12);
-  timerLog_stopEventAndLog(&timerLog,"histogram shared R, no padding", imageid, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog,"histogram shared R no padding", imageid, imageWidth, imageHeight);
 
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
   timerLog_startEvent(&timerLog);
