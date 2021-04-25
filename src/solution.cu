@@ -35,7 +35,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
   // execute color convert to get grey and yuv images, note this transposes the output images in memory
   // so all channels store their pixels sequentially, for example all the y pixels followed by all the
   // u pixels then folled by all the v pixels for the yuv image
-  launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize);
+  launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize, "convert");
 
   //--------------------------------------------------
   // execute otsu's method
