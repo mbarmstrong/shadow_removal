@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
   	dim3 blockDim(16, 16, 1);
 
   	// launch
-  	color_conversions(inputImage_RGB, outputImage_Inv, outputImage_Gray, outputImage_YUV, imageWidth, imageHeight, "ut");
+  	color_conversions(deviceInputImageData_RGB, deviceOutputImageData_Inv, deviceOutputImageData_Gray, deviceOutputImageData_YUV, imageWidth, imageHeight, "ut");
 
   	wbTime_stop(Compute, "Doing the computation on the GPU");
 
