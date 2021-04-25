@@ -1,4 +1,5 @@
 #include "kernel.cu"
+#include "unit_test.cu"
 
 void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
 						  unsigned char *outputImage_Gray, unsigned char* outputImage_YUV,
