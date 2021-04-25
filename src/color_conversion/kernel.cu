@@ -57,7 +57,7 @@ __global__ void color_convert(unsigned char *rgbImage, float *invImage, float *g
 
 // individual kernel -- RGB to invariant
 // not used
-__global__ void convert_rgb_invariant( float *rgbImage, float *invImage, int width, int height, int num_channels) {
+__global__ void convert_rgb_invariant(unsigned char *rgbImage, float *invImage, int width, int height, int num_channels) {
   
   	// invariant: a feature that remains unchanged when a particular transformation is applied
 	// "Color based object recognition," T. Gevers
@@ -104,7 +104,7 @@ __global__ void convert_invariant_grayscale(float *invImage, float *grayImage, i
 
 // individual kernel -- RGB to YUV
 // not used
-__global__ void convert_rgb_yuv(float *rgbImage, float *yuvImage, int width, int height, int num_channels) {
+__global__ void convert_rgb_yuv(unsigned char *rgbImage, float *yuvImage, int width, int height, int num_channels) {
 
   	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
   	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
