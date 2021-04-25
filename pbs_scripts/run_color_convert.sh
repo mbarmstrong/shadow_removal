@@ -13,5 +13,5 @@ OUTDIR=$HOME/ece569/shadow_removal/output;
 #fi
 
 
-$BUILDDIR/ColorConvertUnitTest_Solution -i $DATADIR/4Image.ppm -o $OUTDIR/color_convert_ut.csv -t image
+$BUILDDIR/ColorConvertUnitTest_Solution -i $DATADIR/plt.ppm -o $OUTDIR/color_convert_ut.csv -t image
 
