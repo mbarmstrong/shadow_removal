@@ -1,3 +1,6 @@
+#ifndef __HISTO__
+#define __HISTO__
+
 #include "../globals.h"
 
 #define WARP_SIZE 32
@@ -177,3 +180,43 @@ __global__ void histogram_shared_R_kernel(unsigned char *data, unsigned int *his
     }
 
 }
+
+// version 3
+__global__ void histogram_shared_R_nopad_kernel(unsigned char *data, unsigned int *histo,
+                                 unsigned int size, unsigned int R) {
+
+    extern __shared__ unsigned int Hs[];
+
+    const int warpid = (int)(threadIdx.x / WARP_SIZE);
+    const int lane = threadIdx.x % WARP_SIZE;
+    const int warps_block = blockDim.x / WARP_SIZE;
+
+    const int off_rep = (NUM_BINS) * (threadIdx.x % R);
+
+    const int begin = (size / warps_block) * warpid + WARP_SIZE * blockIdx.x + lane;
+    const int end = (size / warps_block) * (warpid + 1);
+    const int step = WARP_SIZE * gridDim.x;
+
+    for(int pos = threadIdx.x; pos < (NUM_BINS) * R; pos += blockDim.x) Hs[pos] = 0;
+
+    __syncthreads();
+
+    for(int i = begin; i < end; i += step){
+        unsigned int d = data[i];
+
+        atomicAdd(&Hs[off_rep + d], 1);
+    }
+
+    __syncthreads();
+
+    for(int pos = threadIdx.x; pos < NUM_BINS; pos += blockDim.x){
+      unsigned int sum = 0;
+      for(int base = 0; base < (NUM_BINS) * R; base += NUM_BINS){
+        sum += Hs[base + pos];
+      }
+      atomicAdd(histo + pos, sum);
+    }
+
+}
+
+#endif

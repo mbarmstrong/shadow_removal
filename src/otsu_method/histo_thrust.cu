@@ -1,4 +1,7 @@
 
+#ifndef __HISTO_THRUST__
+#define __HISTO_THRUST__
+
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
@@ -7,6 +10,8 @@
 #include <thrust/binary_search.h>
 #include <thrust/adjacent_difference.h>
 #include <thrust/transform.h>
+
+#include "../globals.h"
 
 template<typename T>
  struct greater_127
@@ -31,25 +36,22 @@ template<typename T>
  }; // end set_equal_127
 
 
-void histo_thrust(unsigned int * hostInput, unsigned int * hostBins, int inputLength) {
-
-    cudaEvent_t astartEvent, astopEvent;
-    float aelapsedTime;
-    cudaEventCreate(&astartEvent);
-    cudaEventCreate(&astopEvent);
+void histo_thrust(unsigned char * hostInput, int imageWidth, int imageHeight, const char* imageid) {
 
     unsigned int *binwidths;
+    int inputLength = imageWidth * imageHeight;
+
     binwidths = (unsigned int *)malloc((NUM_BINS) * sizeof(unsigned int));
 
     for(int i = 0; i<(NUM_BINS); i++){
         binwidths[i] = i;
     }
 
-    thrust::device_vector<unsigned int>input_thrust(hostInput, hostInput + inputLength);
+    thrust::device_vector<unsigned char>input_thrust(hostInput, hostInput + inputLength);
     thrust::device_vector<unsigned int>binwidths_thrust(binwidths, binwidths + NUM_BINS);
     thrust::device_vector<unsigned int>bins_thrust(NUM_BINS);
 
-    cudaEventRecord(astartEvent, 0);
+    timerLog_startEvent(&timerLog);
 
     thrust::sort(thrust::device,input_thrust.begin(),input_thrust.end());
 
@@ -66,13 +68,10 @@ void histo_thrust(unsigned int * hostInput, unsigned int * hostBins, int inputLe
     greater_127<unsigned int>pred;
     thrust::transform_if(bins_thrust.begin(), bins_thrust.end(), bins_thrust.begin(), op, pred);
 
-    cudaEventRecord(astopEvent, 0);
-    cudaEventSynchronize(astopEvent);
-    cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
-    printf("\n");
-    printf("Total compute time (ms) %f for thrust version\n",aelapsedTime);
-    printf("\n");
+    timerLog_stopEventAndLog(&timerLog, "sort and reduce by key", imageid, imageWidth, imageHeight);
 
-    thrust::copy(bins_thrust.begin(), bins_thrust.end(), hostBins);
+    //thrust::copy(bins_thrust.begin(), bins_thrust.end(), hostBins);
 
 }
+
+#endif

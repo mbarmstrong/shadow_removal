@@ -1,3 +1,5 @@
+#define SOLUTION
+
 #include <wb.h>
 #include "globals.h"
 #include "./color_conversion/launch.cu"
@@ -6,35 +8,10 @@
 #include "./convolution/launch.cu"
 #include "./result_integration/launch.cu"
 
-int main(int argc, char *argv[]) {
 
-  //-------------------------------------------------
-  //  get inputs and load inital rgb image
-  //
-  //-------------------------------------------------
-  wbArg_t args;
-  int imageWidth;
-  int imageHeight;
-  int imageSize;
+void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
 
-  char *inputImageFile;
-  //char *outputImageFile;
-
-	wbImage_t inputImage_RGB;
-
-  args = wbArg_read(argc, argv); // parse the input arguments
-
-  inputImageFile = wbArg_getInputFile(args, 0);
-  inputImage_RGB = wbImport(inputImageFile);
-
-  //outputImageFile = wbArg_getOutputFile(args);
-  imageWidth = wbImage_getWidth(inputImage_RGB);
-  imageHeight = wbImage_getHeight(inputImage_RGB);
-
-  imageSize = imageWidth * imageHeight;
-
-  printf("\nRunning shadow removal on image of %dx%d with %d channels...\n",
-          imageWidth, imageHeight, NUM_CHANNELS);
+  int imageSize = imageWidth * imageHeight;
 
   cudaEvent_t astartEvent, astopEvent;
   float aelapsedTime;
@@ -47,12 +24,9 @@ int main(int argc, char *argv[]) {
   // execute color conversion 
   // generate three images: color invarient, gray and YUV
   //--------------------------------------------------
-  float *rgbImage;
   float *invImage;
   unsigned char *grayImage;
   unsigned char *yuvImage;
-
-  rgbImage = wbImage_getData(inputImage_RGB);
 
   invImage =  (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
   grayImage = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char));
@@ -61,7 +35,7 @@ int main(int argc, char *argv[]) {
   // execute color convert to get grey and yuv images, note this transposes the output images in memory
   // so all channels store their pixels sequentially, for example all the y pixels followed by all the
   // u pixels then folled by all the v pixels for the yuv image
-  launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize);
+  launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize, "convert");
 
   //--------------------------------------------------
   // execute otsu's method
@@ -76,10 +50,10 @@ int main(int argc, char *argv[]) {
   grayMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
-  level_gray = launch_otsu_method(grayImage, imageWidth, imageHeight);
+  level_gray = launch_otsu_method(grayImage, imageWidth, imageHeight, "gray");
   launch_image_binarization(grayImage, grayMask, level_gray, imageWidth, imageHeight, true);
 
-  level_u = launch_otsu_method(u, imageWidth, imageHeight);
+  level_u = launch_otsu_method(u, imageWidth, imageHeight, "yuv");
   launch_image_binarization(u, yuvMask, level_u, imageWidth, imageHeight, false);
 
   //--------------------------------------------------
@@ -156,9 +130,6 @@ int main(int argc, char *argv[]) {
     print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageSize);
   }
   
-  wbImage_delete(inputImage_RGB);
-
-
   printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
   const char *base_dir =
       wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
@@ -167,7 +138,6 @@ int main(int argc, char *argv[]) {
 
   char *output_file_name = wbPath_join(dir_name, "output.ppm");
   write_data(output_file_name,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
-
 
   free(invImage);
   free(grayImage);
@@ -178,6 +148,50 @@ int main(int argc, char *argv[]) {
   free(erodedLight);
   free(smoothMask);
   free(finalImage);
+
+}
+
+int main(int argc, char *argv[]) {
+
+  //-------------------------------------------------
+  //  get inputs and load inital rgb image
+  //
+  //-------------------------------------------------
+  wbArg_t args;
+
+  char *inputImageFile;
+  //char *outputImageFile;
+
+	wbImage_t inputImage_RGB;
+  float *rgbImage;
+  int imageWidth;
+  int imageHeight;
+
+  args = wbArg_read(argc, argv); // parse the input arguments
+
+  timerLog = timerLog_new( wbArg_getOutputFile(args) ); //setup global instance of logger
+
+  int inputFileCount = wbArg_getInputCount(args);
+
+  for(int i = 0; i < inputFileCount; i++) {
+    inputImageFile = wbArg_getInputFile(args, i);
+    inputImage_RGB = wbImport(inputImageFile);
+
+    //outputImageFile = wbArg_getOutputFile(args);
+    imageWidth = wbImage_getWidth(inputImage_RGB);
+    imageHeight = wbImage_getHeight(inputImage_RGB);
+
+    rgbImage = wbImage_getData(inputImage_RGB);
+
+    printf("\nRunning shadow removal on image of %dx%d with %d channels...\n",
+          imageWidth, imageHeight, NUM_CHANNELS);
+
+    execute_shadow_removal(rgbImage, imageWidth, imageHeight);
+  }
+
+  timerLog_save(&timerLog);
+
+  wbImage_delete(inputImage_RGB);
   
   return 0;
 }

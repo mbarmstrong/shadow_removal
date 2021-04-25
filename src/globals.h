@@ -13,13 +13,22 @@
 
 struct st_timerLog_t {
 
+  //Variables to be logged
   char kernel_name[MAX_LOG_ENTRIES][50];
+  char image_id[MAX_LOG_ENTRIES][50];
+  int width[MAX_LOG_ENTRIES];
+  int height[MAX_LOG_ENTRIES];
   float time[MAX_LOG_ENTRIES];
 
-  char _header[2][20];
+  char _header[5][20];
   int _entry_count;
   char* _out_file;
   bool _write_header;
+
+  bool _event_created;
+  cudaEvent_t _start_event;
+  cudaEvent_t _stop_event;
+  float _elapsed_time;
 };
 
 st_timerLog_t timerLog_new(char* outfile) {
@@ -27,10 +36,16 @@ st_timerLog_t timerLog_new(char* outfile) {
   if (outfile == NULL)
     printf("\nFile Logging Turned Off\n");
 
-  st_timerLog_t log = {._header = {{"kernel\0"},{"time\0"}},
+  st_timerLog_t log = {.kernel_name = {{}},
+                       .image_id = {{}},
+                       .width = {},
+                       .height = {},
+                       .time = {},
+                       ._header = {{"kernel\0"},{"width\0"},{"height\0"},{"time (ms)\0"}},
                        ._entry_count = 0,
                        ._out_file = outfile,
-                       ._write_header = true};
+                       ._write_header = true,
+                       ._event_created = false };
 
   return log;
 
@@ -61,29 +76,52 @@ void timerLog_save(st_timerLog_t* log) {
   }
 
   for(int i = 0; i < log->_entry_count; i++)
-      fprintf(handle, "%s, %f\n",log->kernel_name[i], log->time[i]);
+      fprintf(handle, "%s, %s, %d, %d, %f\n",log->kernel_name[i], log->image_id[i], log->width[i], log->height[i], log->time[i]);
 
   fflush(handle);
   fclose(handle);
 
 }
 
-void timerLog_append(st_timerLog_t* log, const char* kernel, float time) {
+void timerLog_stopEventAndLog(st_timerLog_t* log, const char* kernel, const char* imageid, int width, int height) {
 
-  int e = log->_entry_count;
+  cudaEventRecord(log->_stop_event, 0);
+  cudaEventSynchronize(log->_stop_event);
+  cudaEventElapsedTime(&(log->_elapsed_time), log->_start_event, log->_stop_event);
 
-  if(e >= MAX_LOG_ENTRIES){
+
+  if(log->_entry_count >= MAX_LOG_ENTRIES){
     timerLog_save(log);
     log->_entry_count = 0;
   }
 
-  strcpy(log->kernel_name[e],kernel);
-  log->time[e] = time;
+  int e = log->_entry_count;
 
+  strcpy(log->kernel_name[e],kernel);
+  strcpy(log->image_id[e],imageid);
+  log->width[e] = width;
+  log->height[e] = height;
+  log->time[e] = log->_elapsed_time;
+
+  log->_elapsed_time = 0.0;
   log->_entry_count++;
 
 }
 
+void timerLog_startEvent(st_timerLog_t* log) {
+
+  if(!(log->_event_created)) {
+    cudaEventCreate(&(log->_start_event));
+    cudaEventCreate(&(log->_stop_event));
+    log->_event_created = true;
+  }
+
+  cudaEventRecord(log->_start_event, 0);
+
+}
+
+//global instance of timer
+st_timerLog_t timerLog;
 
 #define wbCheck(stmt)                                                     \
   do {                                                                    \

@@ -1,6 +1,31 @@
 #include <wb.h>
-#include "../globals.h"
 #include "kernel.cu"
+#include "../globals.h"
+
+void color_conversions(float *rgbImage, float *invImage, unsigned char *grayImage, unsigned char *yuvImage, int imageWidth, int imageHeight, const char* imageid) {
+  int imageSize = imageWidth * imageHeight;
+
+  dim3 blockDim(512), gridDim(30);
+
+  timerLog_startEvent(&timerLog);
+  convert_rgb_invariant<<<gridDim, blockDim>>>(rgbImage, invImage, imageWidth, imageHeight, 3);
+  timerLog_stopEventAndLog(&timerLog, "RGB to invariant", imageid, imageWidth, imageHeight);
+
+  timerLog_startEvent(&timerLog);
+  convert_invariant_grayscale<<<gridDim, blockDim>>>(invImage, grayImage, imageWidth, imageHeight, 3);
+  timerLog_stopEventAndLog(&timerLog, "invariant to grayscale", imageid, imageWidth, imageHeight);
+  
+  timerLog_startEvent(&timerLog);
+  convert_rgb_yuv<<<gridDim, blockDim>>>(rgbImage, yuvImage, imageWidth, imageHeight, 3);
+  timerLog_stopEventAndLog(&timerLog, "RGB to YUV", imageid, imageWidth, imageHeight);
+  
+  timerLog_startEvent(&timerLog);
+  color_convert<<<gridDim, blockDim>>>(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "color convert", imageid, imageWidth, imageHeight);
+  
+} 
+
+#ifndef SOLUTION
 
 int main(int argc, char *argv[]) {
   
@@ -27,6 +52,7 @@ int main(int argc, char *argv[]) {
   	unsigned char *deviceOutputImageData_YUV;
 
   	args = wbArg_read(argc, argv); // parse the input arguments
+    timerLog = timerLog_new( wbArg_getOutputFile(args) );
 
     // FIXME: generate input image
   	inputImageFile = wbArg_getInputFile(args, 0);
@@ -37,7 +63,6 @@ int main(int argc, char *argv[]) {
 
     printf("\nRunning color convert unit test on image of %dx%d with %d channels\n\n",
              imageWidth, imageHeight, NUM_CHANNELS);
-
 
     imageSize = imageWidth * imageHeight;
 
@@ -56,7 +81,7 @@ int main(int argc, char *argv[]) {
     //@@ Allocate GPU memory here
   	wbTime_start(GPU, "Doing GPU memory allocation");
   	CUDA_CHECK(cudaMalloc((void **)&deviceInputImageData_RGB, imageSize * NUM_CHANNELS * sizeof(float)));
-	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Inv, imageSize * NUM_CHANNELS * sizeof(float)));
+	  CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Inv, imageSize * NUM_CHANNELS * sizeof(float)));
   	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_Gray, imageSize * 1 * sizeof(unsigned char)));
   	CUDA_CHECK(cudaMalloc((void **)&deviceOutputImageData_YUV, imageSize * NUM_CHANNELS * sizeof(unsigned char)));
   	wbTime_stop(GPU, "Doing GPU memory allocation");
@@ -72,10 +97,8 @@ int main(int argc, char *argv[]) {
   	dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
   	dim3 blockDim(16, 16, 1);
 
-  	// launch kernel
-  	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
-  									       deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
-  									       imageWidth, imageHeight);
+  	// launch
+  	color_conversions(deviceInputImageData_RGB, deviceOutputImageData_Inv, deviceOutputImageData_Gray, deviceOutputImageData_YUV, imageWidth, imageHeight, "ut");
 
   	wbTime_stop(Compute, "Doing the computation on the GPU");
 
@@ -99,6 +122,8 @@ int main(int argc, char *argv[]) {
   	printf("First 3 values of yuv image:    %4d,  %4d,  %4d\n", hostOutputImageData_YUV[0],hostOutputImageData_YUV[1],hostOutputImageData_YUV[2]);
     printf("\n");
 
+    timerLog_save(&timerLog);
+
     //@@ Free the GPU memory here
     wbTime_start(GPU, "Freeing GPU Memory");
   	CUDA_CHECK(cudaFree(deviceInputImageData_RGB));
@@ -118,3 +143,5 @@ int main(int argc, char *argv[]) {
 
   	return 0;
 }
+
+#endif

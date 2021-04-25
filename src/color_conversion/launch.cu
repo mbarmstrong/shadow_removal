@@ -1,8 +1,9 @@
-#include "kernel.cu"
+// #include "kernel.cu"
+#include "unit_test.cu"
 
 void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
 						  unsigned char *outputImage_Gray, unsigned char* outputImage_YUV,
-						  int imageWidth, int imageHeight, int imageSize) {
+						  int imageWidth, int imageHeight, int imageSize, const char* imageid) {
 
   	float *deviceInputImageData_RGB;
   	float *deviceOutputImageData_Inv;
@@ -24,6 +25,8 @@ void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
                         imageSize * NUM_CHANNELS * sizeof(float), cudaMemcpyHostToDevice));
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(GPU, "Copying input memory to the GPU.");
+
+    color_conversions(deviceInputImageData_RGB, deviceOutputImageData_Inv, deviceOutputImageData_Gray, deviceOutputImageData_YUV, imageWidth, imageHeight, imageid);
 
   	// launch kernel
   	dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);

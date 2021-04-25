@@ -7,7 +7,6 @@
 // if B is completely contained by A (i.e. every pixel of B = corresponding pixel of A),
 // then the pixel is retained (1), else it is deleted (0).
 
-
 __global__ void image_erode(unsigned char* inImage, unsigned char* outImage_shadow, unsigned char* outImage_light, int mask_width, int width, int height) {
     
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column (x-direction) index
@@ -37,9 +36,12 @@ __global__ void image_erode(unsigned char* inImage, unsigned char* outImage_shad
         outImage_shadow[row * width + col] = value_shadow;
         outImage_light[row * width + col] = value_light;
     }
+}
 
-    // based on MATLAB imerode function
-    // strel = [1 1 1 1 1; 1 1 1 1 1; 1 1 1 1 1; 1 1 1 1 1; 1 1 1 1 1];
-    // eroded_gray_shadow_mask = imerode(gray_mask, strel);
-    // eroded_gray_light_mask = imerode(1-gray_mask, strel);
+__global__ void image_erode_shared(unsigned char* inImage, unsigned char* outImage_shadow, unsigned char* outImage_light, int mask_width, int width, int height) {
+    
+    // mask width = 3
+    // block size = 6x6
+    // tile width = 6 - (mask width - 1) = 4
+
 }
