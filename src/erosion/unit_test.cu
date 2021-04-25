@@ -4,7 +4,7 @@
 
 void erosion_kernels(unsigned char* image, unsigned char* shadow, unsigned char* light, int maskWidth,  int imageWidth, int imageHeight, const char* imageid) {
   int imageSize = imageWidth * imageHeight;
-  dim3 blockDim(512), gridDim(30);
+  dim3 blockDim(8,8), gridDim(1,1);
 
   timerLog_startEvent(&timerLog);
   image_erode_shadow<<<gridDim, blockDim>>>(image, shadow, maskWidth, imageWidth, imageHeight);
@@ -49,10 +49,10 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
-  // dim3 blockDim(8,8), gridDim(1,1);
-  // image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
-  //                                 deviceOutputImage_light, maskWidth, imageWidth, 
-  //                                 imageHeight);
+  dim3 blockDim(8,8), gridDim(1,1);
+  image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
+                                  deviceOutputImage_light, maskWidth, imageWidth, 
+                                  imageHeight);
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
