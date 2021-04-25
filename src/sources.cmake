@@ -16,4 +16,4 @@ add_lab("ConvUnitTest")
 add_lab_solution("ConvUnitTest" ${CMAKE_CURRENT_LIST_DIR}/convolution/unit_test.cu)
 
 add_lab("ResultIntegrationUnitTest")
-add_lab_solution("ResultIntegrationUnitTest" ${CMAKE_CURRENT_LIST_DIR}/result_integration/unit_test.cu)
+add_lab_solution("ResultIntegrationUnitTest" ${CMAKE_CURRENT_LIST_DIR}/result_integration/unit_test.cu) 

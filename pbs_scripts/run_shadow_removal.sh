@@ -2,6 +2,7 @@
 
 BUILDDIR=$HOME/ece569/build_dir;
 DATADIR=$HOME/ece569/shadow_removal/data;
+OUTDIR=$HOME/ece569/shadow_removal/output;
 #DATADIR=$BUILDDIR/TestImages/Dataset/0;
 
 #if [ ! -d "$BUILDDIR/TestImages" ] 
@@ -12,5 +13,5 @@ DATADIR=$HOME/ece569/shadow_removal/data;
 #fi
 
 
-$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/plt5.ppm -t image
+$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/plt4.ppm,$DATADIR/plt5.ppm -o $OUTDIR/histogram_sweeps.csv -t image
 

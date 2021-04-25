@@ -2,8 +2,11 @@
 __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greyShadowMask, 
   unsigned char *greyLightMask, float *redShadowArray,float *greenShadowArray,float *blueShadowArray,
   float *redLightArray,float *greenLightArray,float *blueLightArray,int width, int height, int numChannels) {
+    
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+
+    int stride = width*height;
   
     if (col < width && row < height) {  // check boundary condition
         int idx = row * width + col;      // mapping 2D to 1D coordinate
@@ -22,7 +25,6 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
   
   }
-  
   
   // // Kernel 2: Sums up the light arrays, shadow array and the eroded array - Without reduction
   // __global__ void sum_up_arrays(unsigned char *redShadowArray,unsigned char *greenShadowArray,unsigned char *blueShadowArray,
@@ -172,16 +174,10 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
   }
 
-    __global__ void calculate_final_image_stride(float *redSumShadowArray, float *greenSumShadowArray,float *blueSumShadowArray,
-    float *redSumLightArray, float *greenSumLightArray,float *blueSumLightArray,
-    float *erodedSumShadowArray,float *erodedSumLightArray,
+    __global__ void calculate_final_image_stride(float *redRatio, float *greenRatio,float *blueRatio,
     float *rgbImage, float *smoothMask, float *finalImage,
     int width, int height, int numChannels) {
-  
-    float redRatio = (float)(((float)(redSumLightArray[0]/erodedSumLightArray[0])/(float)(redSumShadowArray[0]/erodedSumShadowArray[0])) -1);
-    float greenRatio = (float)(((float)(greenSumLightArray[0]/erodedSumLightArray[0])/(float)(greenSumShadowArray[0]/erodedSumShadowArray[0])) -1);
-    float blueRatio = (float)(((float)(blueSumLightArray[0]/erodedSumLightArray[0])/(float)(blueSumShadowArray[0]/erodedSumShadowArray[0])) -1);
-  
+
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
 
@@ -194,9 +190,9 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
         float green = rgbImage[numChannels * idx + 1];  // green component
         float blue = rgbImage[numChannels * idx + 2];  // blue component
 
-        float finalImageRed = ((redRatio + 1) / ((1 - smoothMask[idx]) * redRatio + 1) * red);
-        float finalImageGreen = ((greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * green);
-        float finalImageBlue = ((blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * blue);
+        float finalImageRed = ((redRatio[0] + 1) / ((1 - smoothMask[idx]) * redRatio[0] + 1) * red);
+        float finalImageGreen = ((greenRatio[0] + 1) / ((1 - smoothMask[idx]) * greenRatio[0] + 1) * green);
+        float finalImageBlue = ((blueRatio[0] + 1) / ((1 - smoothMask[idx]) * blueRatio[0] + 1) * blue);
 
         finalImage[idx] = finalImageRed;
         finalImage[1 * stride + idx] = finalImageGreen;

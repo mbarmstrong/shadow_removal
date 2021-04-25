@@ -1,7 +1,12 @@
 
 #include "kernel.cu"
+#include "histo.cu"
+#include "histo_thrust.cu"
+#include "unit_test.cu"
 
-float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight) {
+#define RUN_SWEEPS_HISTO 1
+
+float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight, const char* imageid) {
 
   unsigned int* deviceBins;
   unsigned char* deviceImage;
@@ -23,9 +28,15 @@ float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight) 
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
+  #if RUN_SWEEPS_HISTO
+  printf("\nRunning Histogram Sweeps\n\n");
+  histograms(deviceImage, deviceBins, imageWidth, imageHeight, imageid);
+  histo_thrust(image, imageWidth, imageHeight, imageid);
+  #endif
+
   // zero out bins
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
-  
+
   // Launch histogram kernel on the bins
   dim3 blockDim(512), gridDim(30);
   histogram<<<gridDim, blockDim, NUM_BINS * sizeof(unsigned int)>>>(
