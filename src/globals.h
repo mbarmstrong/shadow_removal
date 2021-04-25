@@ -168,24 +168,4 @@ void print_step_array(float* arr, int size) {
   }
   printf("\n\n");
 }
-
-void write_data(char *file_name, float *data,
-                       int width, int height,
-                       int channels) {                       
-  FILE *handle = fopen(file_name, "w");
-  if (channels == 1) {
-    fprintf(handle, "P5\n");
-  } else {
-    fprintf(handle, "P6\n");
-  }
-  fprintf(handle, "#Created by %s\n", __FILE__);
-  fprintf(handle, "%d %d\n", width, height);
-  fprintf(handle, "255\n");
-
-  fwrite(data, width * channels * sizeof(float), height, handle);
-
-  fflush(handle);
-  fclose(handle);
-}
-
 #endif
