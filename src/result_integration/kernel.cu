@@ -25,45 +25,6 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
   
   }
-  
-  // // Kernel 2: Sums up the light arrays, shadow array and the eroded array - Without reduction
-  // __global__ void sum_up_arrays(unsigned char *redShadowArray,unsigned char *greenShadowArray,unsigned char *blueShadowArray,
-  //   unsigned char *redLightArray,unsigned char *greenLightArray,unsigned char *blueLightArray,unsigned char *erodedShadowMask,unsigned char *erodedLightMask
-  //   int width, int height,
-  //   unsigned char *redSumShadowArray, unsigned char *greenSumShadowArray,unsigned char *blueSumShadowArray,
-  //   unsigned char *redSumLightArray, unsigned char *greenSumLightArray,unsigned char *blueSumLightArray,
-  //   unsigned char *erodedSumShadowArray,unsigned char *erodedSumShadowArray) {
-  
-  //   int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
-  //   int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
-  
-  //   if (col < width && row < height) {  // check boundary condition
-  //       int idx = row * width + col;      // mapping 2D to 1D coordinate
-  //       redSumShadowArray += redShadowArray[idx];
-  //       greenSumShadowArray += greenShadowArray[idx];
-  //       blueSumShadowArray += blueShadowArray[idx];
-  //       redSumLightArray += redLightArray[idx];
-  //       greenSumLightArray += greenLightArray[idx];
-  //       blueSumLightArray += blueLightArray[idx];
-
-  //       erodedSumShadowArray += erodedShadowMask[idx];
-  //       erodedSumLightArray += erodedLightMask[idx];
-  //   }
-  // }
-  // template __device__ void warpReduce(volatile unsigned char *sdata, unsigned int tid) { 
-  //   if (blockDim.x >= 64) 
-  //        sdata[tid] += sdata[tid + 32]; 
-  //   if (blockDim.x >= 32) 
-  //       sdata[tid] += sdata[tid + 16]; 
-  //   if (blockDim.x >= 16) 
-  //      sdata[tid] += sdata[tid + 8];
-  //   if (blockDim.x >= 8) 
-  //     sdata[tid] += sdata[tid + 4]; 
-  //   if (blockDim.x >= 4) 
-  //     sdata[tid] += sdata[tid + 2]; 
-  //   if (blockDim.x >= 2) 
-  //     sdata[tid] += sdata[tid + 1]; 
-  // }  
 
  // Kernel 2: Array Reduction Kernel - 1D array
   __global__ void sum_up_arrays_by_reduction(float *g_idata, float *g_odata, int n) {
