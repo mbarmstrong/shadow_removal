@@ -50,9 +50,11 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
   dim3 blockDim(8,8), gridDim(1,1);
-  image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
-                                  deviceOutputImage_light, maskWidth, imageWidth, 
-                                  imageHeight);
+  // image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
+  //                                 deviceOutputImage_light, maskWidth, imageWidth, 
+  //                                 imageHeight);
+
+  erosion_kernels(deviceInputImage, deviceOutputImage_shadow, deviceOutputImage_light, maskWidth, imageWidth,imageHeight, "ut");
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
@@ -126,9 +128,11 @@ int main(int argc, char *argv[]) {
 
     inputImage_RGB_uint8 = data;
 
-    print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
+    // print_image(inputImage_RGB_uint8,imageWidth,imageHeight);
 
     unit_test(inputImage_RGB_uint8,imageWidth,imageHeight);
+
+    timerLog_save(&timerLog);
 
     //free(inputImage_RGB_uint8);
     wbImage_delete(inputImage_RGB);
