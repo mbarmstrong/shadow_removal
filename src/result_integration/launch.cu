@@ -152,9 +152,9 @@ if(PRINT_DEBUG){
   printf("\n");
 }
 
-  float redRatio = (float)(((float)(redSumLightArray/erodedSumLightArray)/(float)(redSumShadowArray/erodedSumShadowArray)) -1);
-  float greenRatio = (float)(((float)(greenSumLightArray/erodedSumLightArray)/(float)(greenSumShadowArray/erodedSumShadowArray)) -1);
-  float blueRatio = (float)(((float)(blueSumLightArray/erodedSumLightArray)/(float)(blueSumShadowArray/erodedSumShadowArray)) -1);
+  float redRatio = (((redSumLightArray/erodedSumLightArray)/(redSumShadowArray/erodedSumShadowArray)) -1);
+  float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
+  float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
   
   printf("\nredRatio:\t%.04f",redRatio);
   printf("\ngreenRatio:\t%.04f",greenRatio);

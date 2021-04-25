@@ -219,11 +219,18 @@ void write_data(char *file_name, float *data,
   fprintf(handle, "#Created by %s\n", __FILE__);
   fprintf(handle, "%d %d\n", width, height);
   fprintf(handle, "255\n");
+  unsigned char *finalData = (unsigned char *)malloc(width * height * channels * sizeof(unsigned char));
+  for(int i=0;i<width*height;i++){
+    finalData[channels * i] = round(data[channels * i] * 255);
+    finalData[channels * i + 1] = round(data[channels * i + 1] * 255);
+    finalData[channels * i + 2] = round(data[channels * i + 2] * 255);
+  }
 
-  fwrite(data, width * channels * sizeof(float), height, handle);
+  fwrite(finalData, width * channels * sizeof(unsigned char), height, handle);
 
   fflush(handle);
   fclose(handle);
 }
+
 
 #endif
