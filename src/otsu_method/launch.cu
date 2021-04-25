@@ -1,5 +1,6 @@
 
 #include "kernel.cu"
+#include "histo.cu"
 
 float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight) {
 

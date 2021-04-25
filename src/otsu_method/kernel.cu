@@ -1,41 +1,6 @@
 
 #include "../globals.h"
 
-// shared memory privatized version
-// include comments describing your approach
-__global__ void histogram(unsigned char *input, unsigned int *bins,
-                                 unsigned int num_elements) {
-
-    //init shared memory to zero
-    extern __shared__ unsigned int bins_s[];
-
-    for(unsigned int b = threadIdx.x; b < NUM_BINS; b+=blockDim.x) {
-        bins_s[b] = 0;
-    }
-
-    __syncthreads();
-
-    //determine the thread index and the stride length
-    unsigned int idx = threadIdx.x + blockDim.x * blockIdx.x;
-    unsigned int stride = blockDim.x * gridDim.x;
-
-    //loop thruogh all input elements and accumulate the bins in shared memory
-    for(unsigned int i = idx; i < num_elements; i+=stride) {
-
-        //convert from floats to uint8
-        //TODO: update if other image formats are passed in
-        unsigned char bin = input[i];
-        atomicAdd(&(bins_s[bin]), 1);
-    }
-
-    __syncthreads();
-
-    //combine all copies of the histogram back in global memory
-    for(unsigned int b = threadIdx.x; b < NUM_BINS; b+=blockDim.x) {
-        atomicAdd(&(bins[b]), bins_s[b]);
-    }
-}
-
 // kernel 2: performs scan to obtain ω(k), the zeroth-order cumulative moment
 // assume number of bins is less than or equal two the total number of threads in a block
 __global__ void omega(unsigned int *histo, float *omega, unsigned int num_elements) {
