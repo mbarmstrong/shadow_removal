@@ -156,11 +156,6 @@ if(PRINT_DEBUG){
   float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
   float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
   
-  printf("\nredRatio:\t%.04f",redRatio);
-  printf("\ngreenRatio:\t%.04f",greenRatio);
-  printf("\nblueRatio:\t%.04f",blueRatio);
-
-
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceFinalImage, imageSize * NUM_CHANNELS * sizeof(float))); 
       CUDA_CHECK(cudaGetLastError());
@@ -247,9 +242,6 @@ wbTime_stop(Copy, "Copying output memory to the CPU");
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
   
-  printf("\nFinal Image from launcher:");
-  print_pixel(finalImage,0,0,1,3,imageSize);
-
   // //@@ Free the GPU memory here
   wbTime_start(Copy, "Freeing GPU Memory");
   CUDA_CHECK(cudaFree(deviceRgbImage));
