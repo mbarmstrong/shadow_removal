@@ -27,9 +27,12 @@ void launch_erosion(unsigned char* image, unsigned char* shadow, unsigned char* 
   int n_threads = 16;
   dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
   dim3 blockDim(n_threads,n_threads);
+
+  timerLog_startEvent(&timerLog);
   image_erode<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage_shadow, 
                                   deviceOutputImage_light, maskWidth, imageWidth, 
                                   imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "erosion global memory", "\0", imageWidth, imageHeight);
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());

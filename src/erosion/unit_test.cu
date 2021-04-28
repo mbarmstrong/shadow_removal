@@ -23,6 +23,8 @@ void erosion_kernels(unsigned char* image, unsigned char* shadow, unsigned char*
 
 }
 
+#ifndef SOLUTION
+
 void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   unsigned char *hostOutputImage_shadow;
@@ -90,7 +92,7 @@ void unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
 }
 
-#ifndef SOLUTION
+
 int main(int argc, char *argv[]) {
   
   	wbArg_t args;

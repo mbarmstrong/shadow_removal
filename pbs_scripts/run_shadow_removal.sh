@@ -13,5 +13,5 @@ OUTDIR=$HOME/ece569/shadow_removal/output;
 #fi
 
 
-$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/plt4.ppm -o $OUTDIR/histogram_sweeps.csv -t image
+$BUILDDIR/ShadowRemoval_Solution -i $DATADIR/plt4.ppm -o $OUTDIR -t image
 

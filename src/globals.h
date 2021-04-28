@@ -1,7 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#define PRINT_DEBUG 0
+#define PRINT_DEBUG 1
 
 #define NUM_CHANNELS 3
 #define NUM_BINS 256
@@ -20,6 +20,7 @@ struct st_timerLog_t {
   int height[MAX_LOG_ENTRIES];
   float time[MAX_LOG_ENTRIES];
 
+  //'class' variables
   char _header[5][20];
   int _entry_count;
   char* _out_file;
@@ -41,7 +42,7 @@ st_timerLog_t timerLog_new(char* outfile) {
                        .width = {},
                        .height = {},
                        .time = {},
-                       ._header = {{"kernel\0"},{"width\0"},{"height\0"},{"time (ms)\0"}},
+                       ._header = {{"kernel\0"},{"image\0"},{"width\0"},{"height\0"},{"time (ms)\0"}},
                        ._entry_count = 0,
                        ._out_file = outfile,
                        ._write_header = true,
@@ -207,7 +208,7 @@ void print_step_array(float* arr, int size) {
   printf("\n\n");
 }
 
-void write_data(char *file_name, float *data,
+void write_image(char *file_name, float *data,
                        int width, int height,
                        int channels) {                       
   FILE *handle = fopen(file_name, "w");
@@ -219,6 +220,7 @@ void write_data(char *file_name, float *data,
   fprintf(handle, "#Created by %s\n", __FILE__);
   fprintf(handle, "%d %d\n", width, height);
   fprintf(handle, "255\n");
+
   unsigned char *finalData = (unsigned char *)malloc(width * height * channels * sizeof(unsigned char));
   for(int i=0;i<width*height;i++){
     finalData[channels * i] = round(data[channels * i] * 255);
@@ -230,17 +232,33 @@ void write_data(char *file_name, float *data,
 
   fflush(handle);
   fclose(handle);
+
 }
 
-void write_data(char *file_name, unsigned char *data,
+void write_image(char *file_name, unsigned char *data,
                        int width, int height,
-                       int channels) {                       
+                       bool binary) {                       
   FILE *handle = fopen(file_name, "w");
+
+  int channels = 1;
+
   if (channels == 1) {
     fprintf(handle, "P5\n");
   } else {
     fprintf(handle, "P6\n");
   }
+
+  unsigned char scale_factor;
+  if(binary)
+    scale_factor = 255;
+  else
+    scale_factor = 1;
+
+  unsigned char *finalData = (unsigned char *)malloc(width * height * channels * sizeof(unsigned char));
+  for(int i=0;i<width*height;i++){
+    data[i] = data[i] * scale_factor;
+  }
+
   fprintf(handle, "#Created by %s\n", __FILE__);
   fprintf(handle, "%d %d\n", width, height);
   fprintf(handle, "255\n");
@@ -249,6 +267,7 @@ void write_data(char *file_name, unsigned char *data,
 
   fflush(handle);
   fclose(handle);
+
 }
 
 

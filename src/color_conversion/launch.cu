@@ -1,6 +1,8 @@
 // #include "kernel.cu"
 #include "unit_test.cu"
 
+#define RUN_SWEEPS_CC 0
+
 void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
 						  unsigned char *outputImage_Gray, unsigned char* outputImage_YUV,
 						  int imageWidth, int imageHeight, int imageSize, const char* imageid) {
@@ -26,14 +28,18 @@ void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
   	CUDA_CHECK(cudaDeviceSynchronize());
   	wbTime_stop(GPU, "Copying input memory to the GPU.");
 
+    #if RUN_SWEEPS_CC
     color_conversions(deviceInputImageData_RGB, deviceOutputImageData_Inv, deviceOutputImageData_Gray, deviceOutputImageData_YUV, imageWidth, imageHeight, imageid);
-
+    #endif
+	
   	// launch kernel
   	dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
   	dim3 blockDim(16, 16, 1);
+	timerLog_startEvent(&timerLog);
   	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
   										deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
   										imageWidth, imageHeight);
+	timerLog_stopEventAndLog(&timerLog, "Color Conversion", "\0", imageWidth, imageHeight);
   	CUDA_CHECK(cudaGetLastError());
   	CUDA_CHECK(cudaDeviceSynchronize());
 

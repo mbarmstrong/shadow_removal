@@ -9,13 +9,8 @@
 #include "./result_integration/launch.cu"
 
 
-void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
+void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, char* outDir){
 
-  const char *base_dir =
-      wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
-  const char *dir_name =
-      wbDirectory_create(wbPath_join(base_dir, "output"));
-  char *output_file_name;
 
   int imageSize = imageWidth * imageHeight;
 
@@ -57,16 +52,11 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
   yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
   level_gray = launch_otsu_method(grayImage, imageWidth, imageHeight, "gray");
-  launch_image_binarization(grayImage, grayMask, level_gray, imageWidth, imageHeight, true);
+  launch_image_binarization(grayImage, grayMask, level_gray, imageWidth, imageHeight, true, "gray");
 
   level_u = launch_otsu_method(u, imageWidth, imageHeight, "yuv");
-  launch_image_binarization(u, yuvMask, level_u, imageWidth, imageHeight, false);
+  launch_image_binarization(u, yuvMask, level_u, imageWidth, imageHeight, false, "yuv");
 
-  output_file_name = wbPath_join(dir_name, "grayMask.ppm");
-  write_data(output_file_name,grayMask,imageWidth,imageHeight,1);
-
-  output_file_name = wbPath_join(dir_name, "yuvMask.ppm");
-  write_data(output_file_name,yuvMask,imageWidth,imageHeight,1);
 
   //--------------------------------------------------
   // execute erosion
@@ -81,12 +71,6 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
 
   launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight);
 
-  output_file_name = wbPath_join(dir_name, "erodedShadow.ppm");
-  write_data(output_file_name,erodedShadow,imageWidth,imageHeight,1);
-
-  output_file_name = wbPath_join(dir_name, "erodedLight.ppm");
-  write_data(output_file_name,erodedLight,imageWidth,imageHeight,1);
-
   //--------------------------------------------------
   // execute convolution
   //
@@ -97,8 +81,6 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
 
   launch_convolution(yuvMask, smoothMask, maskWidth, imageWidth, imageHeight);
 
-  output_file_name = wbPath_join(dir_name, "smoothMask.ppm");
-  write_data(output_file_name,smoothMask,imageWidth,imageHeight,1);
 
   //--------------------------------------------------
   //  Execute Result Integration method -
@@ -115,7 +97,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
   cudaEventSynchronize(astopEvent);
   cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
 
-  if (PRINT_DEBUG) {
+  #if PRINT_DEBUG
 
     int debugPixelRow = 0;
     int debugPixelCol = 0;
@@ -149,20 +131,41 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
 
     printf("\nFinal Image:");
     print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageSize);
-  }
-  
-  printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
-  // const char *base_dir =
-  //     wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
-  // const char *dir_name =
-  //     wbDirectory_create(wbPath_join(base_dir, "output"));
 
-  output_file_name = wbPath_join(dir_name, "input.ppm");
-  write_data(output_file_name,rgbImage,imageWidth,imageHeight,NUM_CHANNELS);
 
-  output_file_name = wbPath_join(dir_name, "output.ppm");
-  write_data(output_file_name,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
+    char *output_file_name;
 
+    output_file_name = wbPath_join(outDir, "input.ppm");
+    write_image(output_file_name,rgbImage,imageWidth,imageHeight,NUM_CHANNELS);
+
+    output_file_name = wbPath_join(outDir, "greyImage.ppm");
+    write_image(output_file_name,grayImage,imageWidth,imageHeight,false);
+
+    output_file_name = wbPath_join(outDir, "U.ppm");
+    write_image(output_file_name,u,imageWidth,imageHeight,false);
+
+    output_file_name = wbPath_join(outDir, "grayMask.ppm");
+    write_image(output_file_name,grayMask,imageWidth,imageHeight,true);
+
+    output_file_name = wbPath_join(outDir, "yuvMask.ppm");
+    write_image(output_file_name,yuvMask,imageWidth,imageHeight,true);
+
+    output_file_name = wbPath_join(outDir, "erodedShadow.ppm");
+    write_image(output_file_name,erodedShadow,imageWidth,imageHeight,true);
+
+    output_file_name = wbPath_join(outDir, "erodedLight.ppm");
+    write_image(output_file_name,erodedLight,imageWidth,imageHeight,true);
+
+    output_file_name = wbPath_join(outDir, "smoothMask.ppm");
+    write_image(output_file_name,smoothMask,imageWidth,imageHeight,1);
+
+    output_file_name = wbPath_join(outDir, "output.ppm");
+    write_image(output_file_name,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
+
+  #endif
+
+  printf("Done! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
+ 
   free(invImage);
   free(grayImage);
   free(yuvImage);
@@ -193,7 +196,10 @@ int main(int argc, char *argv[]) {
 
   args = wbArg_read(argc, argv); // parse the input arguments
 
-  timerLog = timerLog_new( wbArg_getOutputFile(args) ); //setup global instance of logger
+  char *outputDir = wbArg_getOutputFile(args);
+  char *outputFile = wbPath_join(outputDir, "kernel_times.csv");
+
+  timerLog = timerLog_new(outputFile); //setup global instance of logger
 
   int inputFileCount = wbArg_getInputCount(args);
 
@@ -207,10 +213,10 @@ int main(int argc, char *argv[]) {
 
     rgbImage = wbImage_getData(inputImage_RGB);
 
-    printf("\nRunning shadow removal on image of %dx%d with %d channels...\n",
+    printf("\nRunning shadow removal on image of %dx%d... ",
           imageWidth, imageHeight, NUM_CHANNELS);
 
-    execute_shadow_removal(rgbImage, imageWidth, imageHeight);
+    execute_shadow_removal(rgbImage, imageWidth, imageHeight, outputDir);
   }
 
   timerLog_save(&timerLog);

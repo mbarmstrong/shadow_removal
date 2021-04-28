@@ -3,7 +3,7 @@
 #include "../globals.h"
 #include "unit_test.cu"
 
-#define RUN_SWEEPS_CONV 1
+#define RUN_SWEEPS_CONV 0
 
 void launch_convolution(unsigned char* image, float* outputImage, int maskWidth,  int imageWidth, int imageHeight) {
 
