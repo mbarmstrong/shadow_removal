@@ -84,7 +84,7 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
- // Launch sum_up_arrays kernel on the light and shadow arrays for each channel
+ // Launch sum_up_arrays kernel on the light and shadow arrays for each channelth
   cudaEventRecord(astartEvent1, 0);
   redSumShadowArray = gpu_sum_reduce(deviceRedShadowArray, imageSize);
 

@@ -11,6 +11,12 @@
 
 void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
 
+  const char *base_dir =
+      wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
+  const char *dir_name =
+      wbDirectory_create(wbPath_join(base_dir, "output"));
+  char *output_file_name;
+
   int imageSize = imageWidth * imageHeight;
 
   cudaEvent_t astartEvent, astopEvent;
@@ -56,6 +62,12 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
   level_u = launch_otsu_method(u, imageWidth, imageHeight, "yuv");
   launch_image_binarization(u, yuvMask, level_u, imageWidth, imageHeight, false);
 
+  output_file_name = wbPath_join(dir_name, "grayMask.ppm");
+  write_data(output_file_name,grayMask,imageWidth,imageHeight,1);
+
+  output_file_name = wbPath_join(dir_name, "yuvMask.ppm");
+  write_data(output_file_name,yuvMask,imageWidth,imageHeight,1);
+
   //--------------------------------------------------
   // execute erosion
   //
@@ -69,6 +81,12 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
 
   launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight);
 
+  output_file_name = wbPath_join(dir_name, "erodedShadow.ppm");
+  write_data(output_file_name,erodedShadow,imageWidth,imageHeight,1);
+
+  output_file_name = wbPath_join(dir_name, "erodedLight.ppm");
+  write_data(output_file_name,erodedLight,imageWidth,imageHeight,1);
+
   //--------------------------------------------------
   // execute convolution
   //
@@ -78,6 +96,9 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
   smoothMask = (float *)malloc(imageSize * sizeof(float));
 
   launch_convolution(yuvMask, smoothMask, maskWidth, imageWidth, imageHeight);
+
+  output_file_name = wbPath_join(dir_name, "smoothMask.ppm");
+  write_data(output_file_name,smoothMask,imageWidth,imageHeight,1);
 
   //--------------------------------------------------
   //  Execute Result Integration method -
@@ -131,12 +152,15 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight){
   }
   
   printf("\nDone! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
-  const char *base_dir =
-      wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
-  const char *dir_name =
-      wbDirectory_create(wbPath_join(base_dir, "output"));
+  // const char *base_dir =
+  //     wbDirectory_create(wbPath_join(wbDirectory_current(), "ece569","shadow_removal"));
+  // const char *dir_name =
+  //     wbDirectory_create(wbPath_join(base_dir, "output"));
 
-  char *output_file_name = wbPath_join(dir_name, "output.ppm");
+  output_file_name = wbPath_join(dir_name, "input.ppm");
+  write_data(output_file_name,rgbImage,imageWidth,imageHeight,NUM_CHANNELS);
+
+  output_file_name = wbPath_join(dir_name, "output.ppm");
   write_data(output_file_name,finalImage,imageWidth,imageHeight,NUM_CHANNELS);
 
   free(invImage);
