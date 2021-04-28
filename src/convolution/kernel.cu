@@ -1,3 +1,5 @@
+#ifndef __CONV_KERNEL__
+#define __CONV_KERNEL__
 
 
 __global__ void conv2d(unsigned char* inImage, float* outImage, int maskwidth, int width, int height) {
@@ -36,7 +38,7 @@ __global__ void conv2d_shared(unsigned char* inImage, float* outImage, int maskw
     //  blocksize = 6 x 6
     //  tilewidth = 6 - (maskwidth-1) = 4
 
-    __shared__ float tile[6][6];
+    __shared__ float tile[20][20];
 
     int col = threadIdx.x + blockIdx.x * 4;
     int row = threadIdx.y + blockIdx.y * 4;
@@ -71,7 +73,7 @@ __global__ void conv2d_shared(unsigned char* inImage, float* outImage, int maskw
 
 __global__ void conv_separable_row(unsigned char* inImage, float* outImage, int maskwidth, int width, int height) {
 
-    __shared__ float tile[4][6];
+    __shared__ float tile[16][20];
 
     int col = threadIdx.x + blockIdx.x * 4;
     int row = threadIdx.y + blockIdx.y * blockDim.y;
@@ -104,7 +106,7 @@ __global__ void conv_separable_row(unsigned char* inImage, float* outImage, int 
 
 __global__ void conv_separable_col(float* inImage, float* outImage, int maskwidth, int width, int height) {
 
-    __shared__ float tile[6][4];
+    __shared__ float tile[20][16];
 
     int col = threadIdx.x + blockIdx.x * blockDim.x;
     int row = threadIdx.y + blockIdx.y * 4;
@@ -132,3 +134,5 @@ __global__ void conv_separable_col(float* inImage, float* outImage, int maskwidt
     }
 
 }
+
+#endif
