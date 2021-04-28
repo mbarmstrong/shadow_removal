@@ -47,6 +47,8 @@ void histograms(unsigned char* deviceImage, unsigned int* deviceBins, int imageW
 
 }
 
+#ifndef SOLUTION
+
 float unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
 
@@ -225,8 +227,6 @@ float unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   return 0;
 
 }
-
-#ifndef SOLUTION
 
 int main(int argc, char *argv[]) {
   

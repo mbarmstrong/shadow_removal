@@ -1,6 +1,9 @@
 #include <wb.h>
 #include "kernel.cu"
 #include "../globals.h"
+#include "unit_test.cu"
+
+#define RUN_SWEEPS_CONV 1
 
 void launch_convolution(unsigned char* image, float* outputImage, int maskWidth,  int imageWidth, int imageHeight) {
 
@@ -37,6 +40,11 @@ void launch_convolution(unsigned char* image, float* outputImage, int maskWidth,
                         imageSize * sizeof(float),
                         cudaMemcpyDeviceToHost));
   wbTime_stop(Copy, "Copying output memory to the CPU");
+
+  #if RUN_SWEEPS_CONV
+  printf("\nRunning Convolution Sweeps\n\n");
+  convolutions(deviceInputImage, deviceOutputImage, maskWidth, imageWidth, imageHeight);
+  #endif
   
   CUDA_CHECK(cudaFree(deviceInputImage));
   CUDA_CHECK(cudaFree(deviceOutputImage));
