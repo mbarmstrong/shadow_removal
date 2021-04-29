@@ -2,23 +2,23 @@
 #include "kernel.cu"
 #include "../globals.h"
 
-void erosion_kernels(unsigned char* image, unsigned char* shadow, unsigned char* light, int maskWidth,  int imageWidth, int imageHeight, const char* imageid) {
+void erosion_kernels(unsigned char* inImage, unsigned char* outImage_shadow, unsigned char* outImage_light, int maskWidth,  int imageWidth, int imageHeight, const char* imageid) {
   int imageSize = imageWidth * imageHeight;
 
   int n_threads = 16;
-  dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
+  dim3 gridDim(ceil((float)imageWidth/(float)n_threads), ceil((float)imageHeight/(float)n_threads));
   dim3 blockDim(n_threads,n_threads);
 
   timerLog_startEvent(&timerLog);
-  image_erode_shadow<<<gridDim, blockDim>>>(image, shadow, maskWidth, imageWidth, imageHeight);
+  image_erode_shadow<<<gridDim, blockDim>>>(inImage, outImage_shadow, maskWidth, imageWidth, imageHeight);
   timerLog_stopEventAndLog(&timerLog, "shadow mask", imageid, imageWidth, imageHeight);
 
   timerLog_startEvent(&timerLog);
-  image_erode_light<<<gridDim, blockDim>>>(image, light, maskWidth, imageWidth, imageHeight);
+  image_erode_light<<<gridDim, blockDim>>>(inImage, outImage_light, maskWidth, imageWidth, imageHeight);
   timerLog_stopEventAndLog(&timerLog, "light mask", imageid, imageWidth, imageHeight);
 
   timerLog_startEvent(&timerLog);
-  image_erode<<<gridDim, blockDim>>>(image, shadow, light, maskWidth, imageWidth, imageHeight);
+  image_erode<<<gridDim, blockDim>>>(inImage, outImage_shadow, outImage_light, maskWidth, imageWidth, imageHeight);
   timerLog_stopEventAndLog(&timerLog, "erosion global memory", imageid, imageWidth, imageHeight);
 
 }
