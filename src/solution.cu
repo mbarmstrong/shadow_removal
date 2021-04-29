@@ -130,7 +130,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
     print_pixel(smoothMask,debugPixelRow,debugPixelCol,1,1,imageSize);
 
     printf("\nFinal Image:");
-    print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageSize);
+    print_pixel(finalImage,debugPixelRow,debugPixelCol,1,3,imageWidth);
 
 
     char *output_file_name;

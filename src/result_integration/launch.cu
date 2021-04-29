@@ -62,8 +62,8 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   wbTime_stop(GPU, "Copying input memory to the GPU.");
   
   // Launch multiple_rgbImage_byMask kernel on the bins
-  dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads),1);
-  dim3 blockDim(n_threads,n_threads,1);
+  dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
+  dim3 blockDim(n_threads,n_threads);
   timerLog_startEvent(&timerLog);
   multiply_rgbImage_byMask<<<gridDim, blockDim>>>(
     deviceRgbImage, deviceErodedShadowMask, 
@@ -115,10 +115,30 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
     printf("\n");
   }
 
-  float redRatio = (((redSumLightArray/erodedSumLightArray)/(redSumShadowArray/erodedSumShadowArray)) -1);
-  float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
-  float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
+  float shadowAverageRed=redSumShadowArray/erodedSumShadowArray;
+  float shadowAverageGreen=greenSumShadowArray/erodedSumShadowArray;
+  float shadowAverageBlue=blueSumShadowArray/erodedSumShadowArray;
+  float lightAverageRed=redSumLightArray/erodedSumLightArray;
+  float lightAverageGreen=greenSumLightArray/erodedSumLightArray;
+  float lightAverageBlue=blueSumLightArray/erodedSumLightArray;
+
+  float redRatio = lightAverageRed/shadowAverageRed -1;
+  float greenRatio = lightAverageGreen/shadowAverageGreen -1;
+  float blueRatio = lightAverageBlue/shadowAverageBlue -1;
   
+
+  if(PRINT_DEBUG){
+    printf("\nshadowAverageRed:\t %.04f",shadowAverageRed);
+    printf("\nshadowAverageGreen:\t%.04f",shadowAverageGreen);
+    printf("\nshadowAverageBlue:\t %.04f",shadowAverageBlue);
+    printf("\nlightAverageRed:\t %.04f",lightAverageRed);
+    printf("\nlightAverageGreen:\t%.04f",lightAverageGreen);
+    printf("\nlightAverageBlue:\t %.04f",lightAverageBlue);
+    printf("\n\nRatio Red:\t %.04f",redRatio);
+    printf("\nRatio Green:\t%.04f",greenRatio);
+    printf("\nRatio Blue:\t %.04f",blueRatio);
+    printf("\n");
+  }
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceFinalImage, imageSize * NUM_CHANNELS * sizeof(float))); 
       CUDA_CHECK(cudaGetLastError());
@@ -152,18 +172,17 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   wbTime_stop(Copy, "Copying output memory to the CPU");
   
   // zero out bins
-  CUDA_CHECK(cudaMemset(deviceFinalImage, 0.0, imageSize * NUM_CHANNELS * sizeof(float)));
+  //CUDA_CHECK(cudaMemset(deviceFinalImage, 0.0, imageSize * NUM_CHANNELS * sizeof(float)));
 
   // Launch calculate_rgb_ratio kernel on the eroded shadow array and calculates the final image
-  dim3 gridDim2(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
-  dim3 blockDim2(16, 16, 1);
+  dim3 gridDim2(ceil((float)imageWidth/16.0), ceil((float)imageHeight/16.0));
+  dim3 blockDim2(16, 16);
 
   timerLog_startEvent(&timerLog);
-  calculate_final_image_stride<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
+  calculate_final_image_optimised<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
   deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   imageWidth, imageHeight, NUM_CHANNELS);
   timerLog_stopEventAndLog(&timerLog, "R.Integration Kernel 3", "\0", imageWidth, imageHeight); 
-
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
