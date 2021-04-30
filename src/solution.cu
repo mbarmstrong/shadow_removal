@@ -71,6 +71,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
 
   launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight);
 
+
   //--------------------------------------------------
   // execute convolution
   //

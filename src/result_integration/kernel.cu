@@ -1,3 +1,5 @@
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
 // Kernel 1: Finding average channel values in shadow/light areas for every channel
 __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greyShadowMask, 
   unsigned char *greyLightMask, float *redShadowArray,float *greenShadowArray,float *blueShadowArray,
@@ -13,12 +15,37 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
         float green = rgbImage[numChannels * idx + 1];  // green component
         float blue = rgbImage[numChannels * idx + 2];  // blue component
 
-        redShadowArray[idx] = red * (float)greyShadowMask[idx];
-        greenShadowArray[idx] = green * (float)greyShadowMask[idx];
-        blueShadowArray[idx] = blue * (float)greyShadowMask[idx];
-        redLightArray[idx] = red * (float)greyLightMask[idx];
-        greenLightArray[idx] = green * (float)greyLightMask[idx];
-        blueLightArray[idx] = blue * (float)greyLightMask[idx];
+        redShadowArray[idx] = (float)(red * greyShadowMask[idx]);
+        greenShadowArray[idx] = (float)(green * greyShadowMask[idx]);
+        blueShadowArray[idx] = (float)(blue * greyShadowMask[idx]);
+        redLightArray[idx] = (float)(red * greyLightMask[idx]);
+        greenLightArray[idx] = (float)(green * greyLightMask[idx]);
+        blueLightArray[idx] = (float) (blue * greyLightMask[idx]);
+  
+    }
+  
+  }
+
+  __global__ void multiply_rgbImage_byMask(float *rgbImage, float *greyShadowMask, 
+  float *greyLightMask, float *redShadowArray,float *greenShadowArray,float *blueShadowArray,
+  float *redLightArray,float *greenLightArray,float *blueLightArray,int width, int height, int numChannels) {
+    
+    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
+    int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+  
+    if (col < width && row < height) {  // check boundary condition
+        int idx = row * width + col;      // mapping 2D to 1D coordinate
+        // load input RGB values
+        float red = rgbImage[numChannels * idx];      // red component
+        float green = rgbImage[numChannels * idx + 1];  // green component
+        float blue = rgbImage[numChannels * idx + 2];  // blue component
+
+        redShadowArray[idx] = (float)(red * greyShadowMask[idx]);
+        greenShadowArray[idx] = (float)(green * greyShadowMask[idx]);
+        blueShadowArray[idx] = (float)(blue * greyShadowMask[idx]);
+        redLightArray[idx] = (float)(red * greyLightMask[idx]);
+        greenLightArray[idx] = (float)(green * greyLightMask[idx]);
+        blueLightArray[idx] = (float) (blue * greyLightMask[idx]);
   
     }
   
@@ -97,6 +124,13 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     __syncthreads();
 }
 
+  float sum_up_arrays_thrust(float *g_idata,int imageSize) {
+
+    thrust::device_vector<float> deviceInput(g_idata,g_idata+imageSize);
+    float outputSum = thrust::reduce(deviceInput.begin(),deviceInput.end());
+    return outputSum;
+}
+
   // Calculates the Red, Green and Blue ratios from the sum in Kernel 2 to produce the shadowless image 
   // Uses the RGB ratios produced in Kernel 3 and the input image to remove the shadow and create the final output 
 
@@ -126,7 +160,7 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
   }
 
-    __global__ void calculate_final_image_optimised(float *redRatio, float *greenRatio,float *blueRatio,
+    __global__ void calculate_final_image_optimised(float redRatio, float greenRatio,float blueRatio,
     float *rgbImage, float *smoothMask, float *finalImage,
     int width, int height, int numChannels) {
   
@@ -136,17 +170,21 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     if (col < width && row < height) {  // check boundary condition
         int idx = row * width + col;      // mapping 2D to 1D coordinate
         // load input RGB values
-        float red = rgbImage[numChannels * idx];      // red component
-        float green = rgbImage[numChannels * idx + 1];  // green component
-        float blue = rgbImage[numChannels * idx + 2];  // blue component
+        int redIdx = numChannels * idx;
+        int greenIdx = numChannels * idx + 1;
+        int blueIdx = numChannels * idx + 2;
 
-        finalImage[numChannels * idx] = ((redRatio[0] + 1) / ((1 - smoothMask[idx]) * redRatio[0] + 1) * red);
-        finalImage[numChannels * idx + 1] = ((greenRatio[0] + 1) / ((1 - smoothMask[idx]) * greenRatio[0] + 1) * green);
-        finalImage[numChannels * idx + 2] = ((blueRatio[0] + 1) / ((1 - smoothMask[idx]) * blueRatio[0] + 1) * blue);
+        float red = rgbImage[redIdx];      // red component
+        float green = rgbImage[greenIdx];  // green component
+        float blue = rgbImage[blueIdx];  // blue component
+
+        finalImage[redIdx] = ((redRatio + 1) / ((1 - smoothMask[idx]) * redRatio + 1) * red);
+        finalImage[greenIdx] = ((greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * green);
+        finalImage[blueIdx] = ((blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * blue);
     }
   }
 
-    __global__ void calculate_final_image_stride(float *redRatio, float *greenRatio,float *blueRatio,
+    __global__ void calculate_final_image_stride(float redRatio, float greenRatio,float blueRatio,
     float *rgbImage, float *smoothMask, float *finalImage,
     int width, int height, int numChannels) {
 
@@ -158,17 +196,21 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     if (col < width && row < height) {  // check boundary condition
         int idx = row * width + col;      // mapping 2D to 1D coordinate
         // load input RGB values
-        float red = rgbImage[numChannels * idx];      // red component
-        float green = rgbImage[numChannels * idx + 1];  // green component
-        float blue = rgbImage[numChannels * idx + 2];  // blue component
+        int redIdx = numChannels * idx;
+        int greenIdx = numChannels * idx + 1;
+        int blueIdx = numChannels * idx + 2;
 
-        float finalImageRed = ((redRatio[0] + 1) / ((1 - smoothMask[idx]) * redRatio[0] + 1) * red);
-        float finalImageGreen = ((greenRatio[0] + 1) / ((1 - smoothMask[idx]) * greenRatio[0] + 1) * green);
-        float finalImageBlue = ((blueRatio[0] + 1) / ((1 - smoothMask[idx]) * blueRatio[0] + 1) * blue);
+        float red = rgbImage[redIdx];      // red component
+        float green = rgbImage[greenIdx];  // green component
+        float blue = rgbImage[blueIdx];  // blue component
 
-        finalImage[idx] = finalImageRed;
-        finalImage[1 * stride + idx] = finalImageGreen;
-        finalImage[2 * stride + idx] = finalImageBlue;
+        float finalImageRed = ((redRatio + 1) / ((1 - smoothMask[idx]) * redRatio + 1) * red);
+        float finalImageGreen = ((greenRatio + 1) / ((1 - smoothMask[idx]) * greenRatio + 1) * green);
+        float finalImageBlue = ((blueRatio + 1) / ((1 - smoothMask[idx]) * blueRatio + 1) * blue);
+
+        finalImage[redIdx] = finalImageRed;
+        finalImage[greenIdx] = finalImageGreen;
+        finalImage[blueIdx] = finalImageBlue;
     }
     }
 

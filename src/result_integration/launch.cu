@@ -1,12 +1,14 @@
 #include <wb.h>
 #include "kernel.cu"
 #include "kernel_reduction.cu"
+#include "kernel_reduction_old.cu"
 #include "../globals.h"
 
 
 void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,unsigned char *erodedLightMask, 
   float *smoothMask,float *finalImage,int imageWidth, int imageHeight) {
   
+  float *redShadowArray;
   float redSumShadowArray;
   float greenSumShadowArray;
   float blueSumShadowArray;
@@ -22,8 +24,8 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   float *deviceRedLightArray;
   float *deviceGreenLightArray;
   float *deviceBlueLightArray;
-  unsigned char *deviceErodedShadowMask;
-  unsigned char *deviceErodedLightMask;
+  float *deviceErodedShadowMask;
+  float *deviceErodedLightMask;
   float *deviceRedRatio;
   float *deviceGreenRatio;
   float *deviceBlueRatio;
@@ -33,12 +35,19 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   int imageSize = imageHeight * imageWidth;
   int n_threads = 16;
 
+  float *erodedShadowMaskF = (float *)malloc(imageSize * sizeof(float));
+  float *erodedLightMaskF = (float *)malloc(imageSize * sizeof(float));
+  for(int i=0;i<imageSize;i++){
+
+    erodedShadowMaskF[i] = (float)erodedShadowMask[i];
+    erodedLightMaskF[i] = (float)erodedLightMask[i];
+  }
 
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK(cudaMalloc((void **)&deviceRgbImage, imageSize * NUM_CHANNELS * sizeof(float)));
   CUDA_CHECK(cudaMalloc((void **)&deviceSmoothMask, imageSize * sizeof(float)));
-  CUDA_CHECK(cudaMalloc((void **)&deviceErodedShadowMask, imageSize * sizeof(unsigned char)));
-  CUDA_CHECK(cudaMalloc((void **)&deviceErodedLightMask, imageSize * sizeof(unsigned char)));
+  CUDA_CHECK(cudaMalloc((void **)&deviceErodedShadowMask, imageSize * sizeof(float)));
+  CUDA_CHECK(cudaMalloc((void **)&deviceErodedLightMask, imageSize * sizeof(float)));
   CUDA_CHECK(cudaMalloc((void **)&deviceRedShadowArray, imageSize * sizeof(float)));
   CUDA_CHECK(cudaMalloc((void **)&deviceGreenShadowArray, imageSize * sizeof(float)));
   CUDA_CHECK(cudaMalloc((void **)&deviceBlueShadowArray, imageSize * sizeof(float)));
@@ -54,9 +63,9 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
                         cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(deviceSmoothMask, smoothMask, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(deviceErodedShadowMask, erodedShadowMask, imageSize * sizeof(unsigned char),
+  CUDA_CHECK(cudaMemcpy(deviceErodedShadowMask, erodedShadowMaskF, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(deviceErodedLightMask, erodedLightMask, imageSize * sizeof(unsigned char),
+  CUDA_CHECK(cudaMemcpy(deviceErodedLightMask, erodedLightMaskF, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));    
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
@@ -169,15 +178,15 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
   
-  // zero out bins
-  //CUDA_CHECK(cudaMemset(deviceFinalImage, 0.0, imageSize * NUM_CHANNELS * sizeof(float)));
+  //zero out bins
+  CUDA_CHECK(cudaMemset(deviceFinalImage, 0.0, imageSize * NUM_CHANNELS * sizeof(float)));
 
   // Launch calculate_rgb_ratio kernel on the eroded shadow array and calculates the final image
   dim3 gridDim2(ceil((float)imageWidth/16.0), ceil((float)imageHeight/16.0));
   dim3 blockDim2(16, 16);
 
   timerLog_startEvent(&timerLog);
-  calculate_final_image_optimised<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
+  calculate_final_image_optimised<<<gridDim2, blockDim2>>>(redRatio, greenRatio,blueRatio,
   deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   imageWidth, imageHeight, NUM_CHANNELS);
   timerLog_stopEventAndLog(&timerLog, "R.Integration Kernel 3", "\0", imageWidth, imageHeight); 
@@ -212,4 +221,3 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   wbTime_stop(Copy, "Freeing GPU Memory");
 
 }
-

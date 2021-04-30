@@ -2,6 +2,7 @@
 #include <wb.h>
 #include "kernel.cu"
 #include "kernel_reduction.cu"
+#include "kernel_reduction_old.cu"
 #include "../globals.h"
 
 void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *erodedLightMask, float *smoothMask,int imageWidth, int imageHeight) {
@@ -24,8 +25,8 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     float *deviceRedRatio;
     float *deviceGreenRatio;
     float *deviceBlueRatio;
-    unsigned char *deviceErodedShadowMask;
-    unsigned char *deviceErodedLightMask;
+    float *deviceErodedShadowMask;
+    float *deviceErodedLightMask;
     float *deviceSmoothMask;
     float *deviceFinalImage;
 
@@ -33,11 +34,19 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
 
   int imageSize = imageHeight * imageWidth;
 
+  float *erodedShadowMaskF = (float *)malloc(imageSize * sizeof(float));
+  float *erodedLightMaskF = (float *)malloc(imageSize * sizeof(float));
+  for(int i=0;i<imageSize;i++){
+
+    erodedShadowMaskF[i] = (float)erodedShadowMask[i];
+    erodedLightMaskF[i] = (float)erodedLightMask[i];
+  }
+
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceRgbImage, imageSize * NUM_CHANNELS *sizeof(float)));
   CUDA_CHECK( cudaMalloc((void **)&deviceSmoothMask, imageSize * sizeof(float)));
-  CUDA_CHECK( cudaMalloc((void **)&deviceErodedShadowMask, imageSize * sizeof(unsigned char)));
-  CUDA_CHECK( cudaMalloc((void **)&deviceErodedLightMask, imageSize * sizeof(unsigned char)));
+  CUDA_CHECK( cudaMalloc((void **)&deviceErodedShadowMask, imageSize * sizeof(float)));
+  CUDA_CHECK( cudaMalloc((void **)&deviceErodedLightMask, imageSize * sizeof(float)));
   CUDA_CHECK( cudaMalloc((void **)&deviceRedShadowArray, imageSize * sizeof(float)));
   CUDA_CHECK( cudaMalloc((void **)&deviceGreenShadowArray, imageSize * sizeof(float)));
   CUDA_CHECK( cudaMalloc((void **)&deviceBlueShadowArray, imageSize * sizeof(float)));
@@ -53,9 +62,9 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
                         cudaMemcpyHostToDevice));
   CUDA_CHECK(cudaMemcpy(deviceSmoothMask, smoothMask, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(deviceErodedShadowMask, erodedShadowMask, imageSize * sizeof(unsigned char),
+  CUDA_CHECK(cudaMemcpy(deviceErodedShadowMask, erodedShadowMaskF, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));
-  CUDA_CHECK(cudaMemcpy(deviceErodedLightMask, erodedLightMask, imageSize * sizeof(unsigned char),
+  CUDA_CHECK(cudaMemcpy(deviceErodedLightMask, erodedLightMaskF, imageSize * sizeof(float),
                         cudaMemcpyHostToDevice));    
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
@@ -168,7 +177,7 @@ wbTime_stop(Copy, "Copying output memory to the CPU");
   {
   dim3 gridDim2(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
   dim3 blockDim2(16, 16, 1);
-  calculate_final_image_stride<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
+  calculate_final_image_optimised_const<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
   deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   imageWidth, imageHeight, NUM_CHANNELS);
     CUDA_CHECK(cudaGetLastError());

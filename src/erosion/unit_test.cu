@@ -9,13 +9,13 @@ void erosion_kernels(unsigned char* inImage, unsigned char* outImage_shadow, uns
   dim3 gridDim(ceil((float)imageWidth/(float)n_threads), ceil((float)imageHeight/(float)n_threads));
   dim3 blockDim(n_threads,n_threads);
 
-  timerLog_startEvent(&timerLog);
-  image_erode_shadow<<<gridDim, blockDim>>>(inImage, outImage_shadow, maskWidth, imageWidth, imageHeight);
-  timerLog_stopEventAndLog(&timerLog, "shadow mask", imageid, imageWidth, imageHeight);
+  // timerLog_startEvent(&timerLog);
+  // image_erode_shadow<<<gridDim, blockDim>>>(inImage, outImage_shadow, maskWidth, imageWidth, imageHeight);
+  // timerLog_stopEventAndLog(&timerLog, "shadow mask", imageid, imageWidth, imageHeight);
 
-  timerLog_startEvent(&timerLog);
-  image_erode_light<<<gridDim, blockDim>>>(inImage, outImage_light, maskWidth, imageWidth, imageHeight);
-  timerLog_stopEventAndLog(&timerLog, "light mask", imageid, imageWidth, imageHeight);
+  // timerLog_startEvent(&timerLog);
+  // image_erode_light<<<gridDim, blockDim>>>(inImage, outImage_light, maskWidth, imageWidth, imageHeight);
+  // timerLog_stopEventAndLog(&timerLog, "light mask", imageid, imageWidth, imageHeight);
 
   timerLog_startEvent(&timerLog);
   image_erode<<<gridDim, blockDim>>>(inImage, outImage_shadow, outImage_light, maskWidth, imageWidth, imageHeight);
