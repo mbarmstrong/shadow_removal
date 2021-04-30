@@ -142,8 +142,6 @@ void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,u
   wbTime_start(GPU, "Allocating GPU memory.");
   CUDA_CHECK( cudaMalloc((void **)&deviceFinalImage, imageSize * NUM_CHANNELS * sizeof(float))); 
       CUDA_CHECK(cudaGetLastError());
-  CUDA_CHECK( cudaMalloc((void **)&deviceSmoothMask, imageSize * sizeof(float)));      
-      CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
       CUDA_CHECK(cudaGetLastError());
   wbTime_stop(GPU, "Allocating GPU memory.");

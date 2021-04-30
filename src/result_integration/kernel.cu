@@ -191,13 +191,31 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
         float green = rgbImage[greenIdx];  // green component
         float blue = rgbImage[blueIdx];  // blue component
 
-        float redChannel = (float)(1.1296 + 1) / (float)((1 - smoothMask[idx]) * 1.1296 + 1);
-        float greenChannel = (float)(1.1999 + 1) / (float)((1 - smoothMask[idx]) * 1.1999 + 1);
-        float blueChannel = (float)(0.8191 + 1) / (float)((1 - smoothMask[idx]) * 0.8191 + 1);
+        float divisorRed = ((1.0000f + (smoothMask[idx] * -1.0000f)) * 1.1296f) + 1.0000f;
+        float dividentRed = (1.1296f + 1.0000f);
 
-        finalImage[redIdx] = (float)(redChannel * red);
-        finalImage[greenIdx] = (float)(greenChannel * green);
-        finalImage[blueIdx] = (float)(blueChannel * blue);
+        float divisorGreen = ((1.0000f - (float)smoothMask[idx]) * 1.1999f ) + 1.0000f;
+        float dividentGreen = (1.1999f + 1.0000f);
+
+        float divisorBlue = ((1.0000f - (float)smoothMask[idx]) * 0.8191f) + 1.0000f;
+        float dividentBlue = (0.8191f  + 1.0000f);
+
+
+        // float redChannel = fdiv_rn(dividentRed,divisorRed);
+        // float greenChannel =fdiv_rn(dividentGreen,divisorGreen);
+        // float blueChannel = fdiv_rn(dividentBlue,divisorBlue);
+
+        // float redChannel = dividentRed/divisorRed;
+        // float greenChannel =dividentGreen/divisorGreen;
+        // float blueChannel = dividentBlue/divisorBlue;
+
+        float redChannel = divisorRed;
+        float greenChannel =divisorGreen;
+        float blueChannel = divisorBlue;
+
+        finalImage[redIdx] = (smoothMask[idx]);
+        finalImage[greenIdx] = (greenChannel);
+        finalImage[blueIdx] = (blueChannel);
     }
     __syncthreads();
   }
