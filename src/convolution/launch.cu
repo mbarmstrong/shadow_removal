@@ -28,8 +28,10 @@ void launch_convolution(unsigned char* image, float* outputImage, int maskWidth,
   int n_threads = 16;
   dim3 gridDim(ceil((float)imageWidth/(float)n_threads),ceil((float)imageHeight/(float)n_threads));
   dim3 blockDim(n_threads,n_threads);
+  timerLog_startEvent(&timerLog);
   conv2d<<<gridDim, blockDim>>>(deviceInputImage, deviceOutputImage, maskWidth,
                                 imageWidth, imageHeight);
+  timerLog_stopEventAndLog(&timerLog, "Convolution", "\0", imageWidth, imageHeight);                               
 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());

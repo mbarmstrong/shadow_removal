@@ -25,7 +25,7 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
   
   }
-
+// Kernel 1: Finding average channel values in shadow/light areas for every channel
   __global__ void multiply_rgbImage_byMask(float *rgbImage, float *greyShadowMask, 
   float *greyLightMask, float *redShadowArray,float *greenShadowArray,float *blueShadowArray,
   float *redLightArray,float *greenLightArray,float *blueLightArray,int width, int height, int numChannels) {
@@ -184,6 +184,30 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
     }
   }
 
+    __global__ void calculate_final_image_optimised(float *redRatio, float *greenRatio,float *blueRatio,
+    float *rgbImage, float *smoothMask, float *finalImage,
+    int width, int height, int numChannels) {
+  
+    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
+    int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
+  
+    if (col < width && row < height) {  // check boundary condition
+        int idx = row * width + col;      // mapping 2D to 1D coordinate
+        // load input RGB values
+        int redIdx = numChannels * idx;
+        int greenIdx = numChannels * idx + 1;
+        int blueIdx = numChannels * idx + 2;
+
+        float red = rgbImage[redIdx];      // red component
+        float green = rgbImage[greenIdx];  // green component
+        float blue = rgbImage[blueIdx];  // blue component
+
+        finalImage[redIdx] = ((redRatio[0] + 1) / ((1 - smoothMask[idx]) * redRatio[0] + 1) * red);
+        finalImage[greenIdx] = ((greenRatio[0] + 1) / ((1 - smoothMask[idx]) * greenRatio[0] + 1) * green);
+        finalImage[blueIdx] = ((blueRatio[0] + 1) / ((1 - smoothMask[idx]) * blueRatio[0] + 1) * blue);
+    }
+  }
+
     __global__ void calculate_final_image_stride(float redRatio, float greenRatio,float blueRatio,
     float *rgbImage, float *smoothMask, float *finalImage,
     int width, int height, int numChannels) {
@@ -213,51 +237,3 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
         finalImage[blueIdx] = finalImageBlue;
     }
     }
-
-
-    __global__ void calculate_final_image_optimised_const(float *redRatio, float *greenRatio,float *blueRatio,
-    float *rgbImage, float *smoothMask, float *finalImage,
-    int width, int height, int numChannels) {
-  
-    int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
-    int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
-  
-    if (col < width && row < height) {  // check boundary condition
-        int idx = row * width + col;      // mapping 2D to 1D coordinate
-        // load input RGB values
-        int redIdx = numChannels * idx;
-        int greenIdx = numChannels * idx + 1;
-        int blueIdx = numChannels * idx + 2;
-
-        float red = rgbImage[redIdx];      // red component
-        float green = rgbImage[greenIdx];  // green component
-        float blue = rgbImage[blueIdx];  // blue component
-
-        float divisorRed = ((1.0000f + (smoothMask[idx] * -1.0000f)) * 1.1296f) + 1.0000f;
-        float dividentRed = (1.1296f + 1.0000f);
-
-        float divisorGreen = ((1.0000f - (float)smoothMask[idx]) * 1.1999f ) + 1.0000f;
-        float dividentGreen = (1.1999f + 1.0000f);
-
-        float divisorBlue = ((1.0000f - (float)smoothMask[idx]) * 0.8191f) + 1.0000f;
-        float dividentBlue = (0.8191f  + 1.0000f);
-
-
-        // float redChannel = fdiv_rn(dividentRed,divisorRed);
-        // float greenChannel =fdiv_rn(dividentGreen,divisorGreen);
-        // float blueChannel = fdiv_rn(dividentBlue,divisorBlue);
-
-        // float redChannel = dividentRed/divisorRed;
-        // float greenChannel =dividentGreen/divisorGreen;
-        // float blueChannel = dividentBlue/divisorBlue;
-
-        float redChannel = divisorRed;
-        float greenChannel =divisorGreen;
-        float blueChannel = divisorBlue;
-
-        finalImage[redIdx] = (smoothMask[idx]);
-        finalImage[greenIdx] = (greenChannel);
-        finalImage[blueIdx] = (blueChannel);
-    }
-    __syncthreads();
-  }

@@ -2,7 +2,6 @@
 #include <wb.h>
 #include "kernel.cu"
 #include "kernel_reduction.cu"
-#include "kernel_reduction_old.cu"
 #include "../globals.h"
 
 void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *erodedLightMask, float *smoothMask,int imageWidth, int imageHeight) {
@@ -22,9 +21,6 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
     float *deviceRedLightArray;
     float *deviceGreenLightArray;
     float *deviceBlueLightArray;
-    float *deviceRedRatio;
-    float *deviceGreenRatio;
-    float *deviceBlueRatio;
     float *deviceErodedShadowMask;
     float *deviceErodedLightMask;
     float *deviceSmoothMask;
@@ -68,12 +64,6 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
                         cudaMemcpyHostToDevice));    
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
-
-  printf("\nGray Shadow Mask:\t");
-  print_image(erodedShadowMask,imageWidth,imageHeight);
-
-  printf("\nGray Light Mask:\t");
-  print_image(erodedLightMask,imageWidth,imageHeight);
   
   // Launch multiple_rgbImage_byMask kernel on the bins
   {
@@ -120,49 +110,13 @@ void unit_test( float *rgbImage,unsigned char *erodedShadowMask,unsigned char *e
   CUDA_CHECK(cudaDeviceSynchronize());
 
 // Launch sum_up_arrays kernel on the eroded light array
-erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize); 
+  erodedSumLightArray = gpu_sum_reduce(deviceErodedLightMask, imageSize); 
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());  
-
-  printf("\nSum of Red Shadow Array:\t %.04f",redSumShadowArray);
-  printf("\nSum of Green Shadow Array:\t%.04f",greenSumShadowArray);
-  printf("\nSum of Blue Shadow Array:\t %.04f",blueSumShadowArray);
-  printf("\nSum of Red Light Array:\t %.04f",redSumLightArray);
-  printf("\nSum of Green Light Array:\t %.04f",greenSumLightArray);
-  printf("\nSum of Blue Light Array:\t%.04f",blueSumShadowArray);
-  printf("\nSum of Eroded  Shadow Array:\t%.04f",erodedSumShadowArray);
-  printf("\nSum of Eroded  Light Array:\t%.04f",erodedSumLightArray);
 
   float redRatio = (((redSumLightArray/erodedSumLightArray)/(redSumShadowArray/erodedSumShadowArray)) -1);
   float greenRatio = (((greenSumLightArray/erodedSumLightArray)/(greenSumShadowArray/erodedSumShadowArray)) -1);
   float blueRatio = (((blueSumLightArray/erodedSumLightArray)/(blueSumShadowArray/erodedSumShadowArray)) -1);
-  
-  printf("\nredRatio:\t%.04f",redRatio);
-  printf("\ngreenRatio:\t%.04f",greenRatio);
-  printf("\nblueRatio:\t%.04f",blueRatio);
-
-
-  wbTime_start(GPU, "Allocating GPU memory.");
-  CUDA_CHECK( cudaMalloc((void **)&deviceRedRatio, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceGreenRatio, sizeof(float)));   
-  CUDA_CHECK( cudaMalloc((void **)&deviceBlueRatio, sizeof(float)));   
-  CUDA_CHECK(cudaDeviceSynchronize());
-  CUDA_CHECK(cudaGetLastError()); 
-  wbTime_stop(GPU, "Allocating GPU memory."); 
-
-  // Copy the GPU memory back to the CPU here
-wbTime_start(Copy, "Copying host memory to the GPU");
-CUDA_CHECK(cudaMemcpy(deviceRedRatio, &redRatio,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceGreenRatio, &greenRatio,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));
-CUDA_CHECK(cudaMemcpy(deviceBlueRatio, &blueRatio,
-                      sizeof(float),
-                      cudaMemcpyHostToDevice));            
-CUDA_CHECK(cudaDeviceSynchronize());
-wbTime_stop(Copy, "Copying output memory to the CPU");
 
   finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
@@ -177,7 +131,7 @@ wbTime_stop(Copy, "Copying output memory to the CPU");
   {
   dim3 gridDim2(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
   dim3 blockDim2(16, 16, 1);
-  calculate_final_image_optimised_const<<<gridDim2, blockDim2>>>(deviceRedRatio, deviceGreenRatio,deviceBlueRatio,
+  calculate_final_image_optimised<<<gridDim2, blockDim2>>>(redRatio, greenRatio,blueRatio,
   deviceRgbImage, deviceSmoothMask, deviceFinalImage,
   imageWidth, imageHeight, NUM_CHANNELS);
     CUDA_CHECK(cudaGetLastError());
