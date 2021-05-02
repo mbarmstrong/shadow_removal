@@ -4,7 +4,7 @@
 
 #include "../globals.h"
 
-// kernel 2: performs scan to obtain ω(k), the zeroth-order cumulative moment
+// kernel 2: obtain ω(k), the zeroth-order cumulative moment
 // assume number of bins is less than or equal two the total number of threads in a block
 __global__ void omega(unsigned int *histo, float *omega, unsigned int num_elements) {
 
@@ -22,9 +22,42 @@ __global__ void omega(unsigned int *histo, float *omega, unsigned int num_elemen
     // nieve cumulitive sum, need to use scan... maybe something to show timing analysis
     if(tid < NUM_BINS) {
         for(int i = 0; i<=tid; i++) {
-            omega[tid] += prob[i];
+            omega[tid] = omega[tid] + prob[i];
         }
     }
+      
+}
+
+// kernel 2: performs scan to obtain ω(k), the zeroth-order cumulative moment
+// assume number of bins is less than or equal two the total number of threads in a block
+__global__ void omega_scan(unsigned int *histo, float *omega, unsigned int num_elements) {
+
+	__shared__ float prob[NUM_BINS]; // probability function for each value
+
+    int tid = threadIdx.x;
+
+	if (tid < NUM_BINS) {
+		prob[tid] = float(histo[tid]) / float(num_elements);
+	}
+
+	// omega(k) = sum(pi) from i = 1 to k 
+    // nieve cumulitive sum, need to use scan... maybe something to show timing analysis
+    for(int stride = 1; stride<=tid; stride*=2) {
+        
+        __syncthreads();
+
+        float p = prob[tid-stride];
+
+        __syncthreads();
+
+        prob[tid] += p;
+    }
+
+    __syncthreads();
+
+    if (tid < NUM_BINS) {
+		omega[tid] = prob[tid];
+	}
       
 }
 
@@ -46,10 +79,40 @@ __global__ void mu(unsigned int *histo, float *mu, unsigned int num_elements) {
     // nieve cumulitive sum, need to use scan... maybe something to show timing analysis
     if(tid < NUM_BINS) {
         for(int i = 0; i<=tid; i++) {
-            mu[tid] += prob[i];
+            mu[tid] = mu[tid] + prob[i];
         }
     }
 
+}
+
+__global__ void mu_scan(unsigned int *histo, float *mu, unsigned int num_elements) {
+
+	__shared__ float prob[NUM_BINS]; // probability function for each value
+
+    int tid = threadIdx.x;
+
+	if (tid < NUM_BINS) {
+		prob[tid] = float(histo[tid]) / float(num_elements);
+        prob[tid] = prob[tid] * float(tid+1);
+	}
+
+    for(int stride = 1; stride<=tid; stride*=2) {
+        
+        __syncthreads();
+
+        float p = prob[tid-stride];
+
+        __syncthreads();
+
+        prob[tid] += p;
+    }
+
+    __syncthreads();
+
+    if (tid < NUM_BINS) {
+		mu[tid] = prob[tid];
+	}
+      
 }
 
 // kernel 4: calculates (σ_B)^2(k), the inter-class variance, for every bin in the 
@@ -68,7 +131,16 @@ __global__ void sigma_b_squared(float *omega, float *mu, float *sigma_b_sq) {
 
 // kernel 5: use argmax to find the k that maximizes (σ_B)^2(k), the threshold calculated 
 // using Otsu’s method. 
-__global__ void calculate_threshold() {
+__global__ void calculate_threshold(float *sigmaBsq, float *level) {
+
+    int tid = threadIdx.x;
+
+	if (tid > 0 && tid < NUM_BINS-1) {
+      //assuming only one global max. If multiple threads find a max there will be a race condition 
+      if((sigmaBsq[tid] > sigmaBsq[tid-1]) && (sigmaBsq[tid] > sigmaBsq[tid+1])) {
+          level[0] = float(tid) / float(NUM_BINS-1);
+      }
+	}
 
 }
 
@@ -91,6 +163,7 @@ float calculate_threshold_cpu(float *sigmaBsq) {
       }     
   }
 
+  printf("\n%d\n",maxIdx);
   return (float(maxIdx)/float(count)) / float(NUM_BINS-1);
 
 }

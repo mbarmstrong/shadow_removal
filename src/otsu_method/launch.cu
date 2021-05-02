@@ -14,11 +14,12 @@ float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight, 
   float* deviceOmega;
   float* deviceMu;
   float* deviceSigmaBsq;
-  float* hostSigmaBsq;
+  float* deviceLevel;
+  float* level;
 
   int imageSize = imageWidth * imageHeight;
 
-  hostSigmaBsq = (float *)malloc(NUM_BINS * sizeof(float));
+  level = (float *)malloc(1 * sizeof(float));
 
   //@@ Allocate GPU memory here
   CUDA_CHECK( cudaMalloc((void **)&deviceImage, imageSize * sizeof(unsigned char)) );
@@ -26,6 +27,7 @@ float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight, 
   CUDA_CHECK( cudaMalloc((void **)&deviceOmega, NUM_BINS * sizeof(float)) );
   CUDA_CHECK( cudaMalloc((void **)&deviceMu, NUM_BINS * sizeof(float)) );
   CUDA_CHECK( cudaMalloc((void **)&deviceSigmaBsq, NUM_BINS * sizeof(float)) );
+  CUDA_CHECK( cudaMalloc((void **)&deviceLevel, 1 * sizeof(float)) );
   CUDA_CHECK( cudaDeviceSynchronize() );
 
   //@@ Copy memory to the GPU here
@@ -45,33 +47,33 @@ float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight, 
   CUDA_CHECK(cudaMemset(deviceOmega, 0.0, NUM_BINS * sizeof(float)));
   CUDA_CHECK(cudaMemset(deviceMu, 0.0, NUM_BINS * sizeof(float)));
   CUDA_CHECK(cudaMemset(deviceSigmaBsq, 0.0, NUM_BINS * sizeof(float)));
+  CUDA_CHECK(cudaMemset(deviceLevel, 0.0, 1 * sizeof(float)));
 
   // Launch histogram kernel on the bins
   dim3 blockDim(512), gridDim(30);
   timerLog_startEvent(&timerLog);
-  histogram<<<gridDim, blockDim, NUM_BINS * sizeof(unsigned int)>>>(
-      deviceImage, deviceBins, imageSize);
+  histogram_shared_R_kernel<<<gridDim, blockDim, (NUM_BINS+1) * 12 * sizeof(unsigned int)>>>(
+      deviceImage, deviceBins, imageSize,12);
   timerLog_stopEventAndLog(&timerLog, "histogram", imageid, imageWidth, imageHeight);
   CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
 
-
   dim3 blockDim1(NUM_BINS), gridDim1(1);
+
   timerLog_startEvent(&timerLog);
   omega<<<gridDim1,blockDim1>>>(deviceBins,deviceOmega,imageSize);
+  timerLog_stopEventAndLog(&timerLog, "omega", imageid, imageWidth, imageHeight);
 
+  timerLog_startEvent(&timerLog);
   mu<<<gridDim1,blockDim1>>>(deviceBins,deviceMu,imageSize);
+  timerLog_stopEventAndLog(&timerLog, "mu", imageid, imageWidth, imageHeight);
 
+  timerLog_startEvent(&timerLog);
   sigma_b_squared<<<gridDim1,blockDim1>>>(deviceOmega,deviceMu,deviceSigmaBsq);
+  timerLog_stopEventAndLog(&timerLog, "sigma_b_squared", imageid, imageWidth, imageHeight);
 
-  //@@ Copy the GPU memory back to the CPU here
-  CUDA_CHECK(cudaMemcpy(hostSigmaBsq, deviceSigmaBsq,
-                        NUM_BINS * sizeof(float),
-                        cudaMemcpyDeviceToHost));
-  CUDA_CHECK(cudaDeviceSynchronize());
-
-  //Replace with kernel but probs won't gain much speedup
-  float level = calculate_threshold_cpu(hostSigmaBsq);
+  timerLog_startEvent(&timerLog);
+  calculate_threshold<<<gridDim1,blockDim1>>>(deviceSigmaBsq, deviceLevel);
   timerLog_stopEventAndLog(&timerLog, "threshold calculation", imageid, imageWidth, imageHeight);
 
   //@@ Free the GPU memory here
@@ -83,9 +85,7 @@ float launch_otsu_method(unsigned char* image, int imageWidth, int imageHeight, 
   CUDA_CHECK(cudaFree(deviceSigmaBsq));
   wbTime_stop(GPU, "Freeing GPU Memory");
 
-  free(hostSigmaBsq);
-
-  return level;
+  return level[0];
 }
 
 void launch_image_binarization(unsigned char* image, unsigned char* binaryImage, float level, int imageWidth, int imageHeight, int flipped, const char* imageid) {

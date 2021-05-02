@@ -101,7 +101,7 @@ float unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   CUDA_CHECK(cudaMemset(deviceOmega, 0.0, NUM_BINS * sizeof(float)));
 
   dim3 blockDim1(NUM_BINS), gridDim1(1);
-  omega<<<gridDim1,blockDim1>>>(deviceBins,deviceOmega,imageSize);
+  omega_scan<<<gridDim1,blockDim1>>>(deviceBins,deviceOmega,imageSize);
 
   //@@ Copy the GPU memory back to the CPU here
   CUDA_CHECK(cudaMemcpy(hostOmega, deviceOmega,
@@ -127,7 +127,7 @@ float unit_test(unsigned char* image, int imageWidth, int imageHeight) {
 
   CUDA_CHECK(cudaMemset(deviceMu, 0.0, NUM_BINS * sizeof(float)));
 
-  mu<<<gridDim1,blockDim1>>>(deviceBins,deviceMu,imageSize);
+  mu_scan<<<gridDim1,blockDim1>>>(deviceBins,deviceMu,imageSize);
 
   //@@ Copy the GPU memory back to the CPU here
   CUDA_CHECK(cudaMemcpy(hostMu, deviceMu,
@@ -170,9 +170,31 @@ float unit_test(unsigned char* image, int imageWidth, int imageHeight) {
   //-------------------------------------------------
 
   //Replace with kernel but probs won't gain much speedup
+
+
+  float* deviceLevel;
+  float* hostLevel;
+
+  hostLevel = (float *)malloc(1 * sizeof(float));
+
+  CUDA_CHECK( cudaMalloc((void **)&deviceLevel, 1 * sizeof(float)) );
+  CUDA_CHECK( cudaDeviceSynchronize() );
+
+  CUDA_CHECK(cudaMemset(deviceLevel, 0.0, 1 * sizeof(float)));
+
+  calculate_threshold<<<gridDim1,blockDim1>>>(deviceSigmaBsq, deviceLevel);
+
+  //@@ Copy the GPU memory back to the CPU here
+  CUDA_CHECK(cudaMemcpy(hostLevel, deviceLevel,
+                        1 * sizeof(float),
+                        cudaMemcpyDeviceToHost));
+  CUDA_CHECK(cudaDeviceSynchronize());
+
+  printf("\n hostLevel:\t%.4f\n\n", hostLevel[0]);
+
   float level = calculate_threshold_cpu(hostSigmaBsq);
 
-  //printf("\n level:\t%.4f\n\n", level);
+  printf("\n level:\t%.4f\n\n", level);
 
 
   //-------------------------------------------------
