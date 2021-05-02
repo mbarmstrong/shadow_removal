@@ -4,7 +4,7 @@
 // merge them into	a single kernel -- this way we avoid reading input image
 // multiple times by each kernel and increase flops per memory read
 
-__global__ void color_convert(float *rgbImage, float *invImage, unsigned char *grayImage, unsigned char *yuvImage, int width, int height) {
+__global__ void color_convert(float *rgbImage, unsigned char *grayImage, unsigned char *yuvImage, int width, int height) {
 	int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
 	int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
 
@@ -26,9 +26,9 @@ __global__ void color_convert(float *rgbImage, float *invImage, unsigned char *g
         float c3 = atan(b / max(r,g));
 
         // store new values in output invariant image
-        invImage[idx]              = c1;	// FIXME: check indices
-	    invImage[1 * stride + idx] = c2;
-	    invImage[2 * stride + idx] = c3;
+     	// invImage[idx]              = c1;
+	    // invImage[1 * stride + idx] = c2;
+	    // invImage[2 * stride + idx] = c3;
 
 	    // calculate invariant to grayscale
 	    // based off matlab function rgb2gray
@@ -42,13 +42,8 @@ __global__ void color_convert(float *rgbImage, float *invImage, unsigned char *g
 	    unsigned char u = round((r * -37.797) + (g * -74.203) + (b * 112.000) + 128.0);	// blue chrominance component
 	    unsigned char v = round((r * 112.000) + (g * -93.786) + (b * -18.214) + 128.0);	// red chrominance component
 
-	    //// based off nvidia function RGBToYCbCr
-	    // float y = (r * 0.257)	+ (g * 0.504) 	+ (b * 0.098)	+ 16.0;  // luminance component
-	    // float u = (r * -0.148) 	+ (g * -0.291)	+ (b * 0.439) 	+ 128.0; // blue chrominance component
-	    // float v = (r * 0.439) 	+ (g * -0.368) 	+ (b * -0.071) 	+ 128.0; // red chrominance component
-
 	    // store new values in output YUV image
-	    yuvImage[idx]              = y;	// FIXME: check indices
+	    yuvImage[idx]              = y;
 	    yuvImage[1 * stride + idx] = u;
 	    yuvImage[2 * stride + idx] = v; 
 

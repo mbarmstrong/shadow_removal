@@ -21,7 +21,7 @@ void color_conversions(float *rgbImage, float *invImage, unsigned char *grayImag
   timerLog_stopEventAndLog(&timerLog, "RGB to YUV", imageid, imageWidth, imageHeight);
   
   timerLog_startEvent(&timerLog);
-  color_convert<<<gridDim, blockDim>>>(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight);
+  color_convert<<<gridDim, blockDim>>>(rgbImage, grayImage, yuvImage, imageWidth, imageHeight);
   timerLog_stopEventAndLog(&timerLog, "color convert", imageid, imageWidth, imageHeight);
   
 } 
