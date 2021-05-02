@@ -489,15 +489,15 @@ float gpu_sum_reduce(float* d_in, int d_in_len)
     CUDA_CHECK(cudaMemset(d_block_sums, 0.0, sizeof(float) * grid_sz));
 
     // Sum data allocated for each block
-    block_sum_reduce<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
-    //reduce4<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
+    //block_sum_reduce<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
+    reduce4<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
     if (grid_sz <= max_elems_per_block)
     {
         float* d_total_sum;
         CUDA_CHECK(cudaMalloc(&d_total_sum, sizeof(float)));
         CUDA_CHECK(cudaMemset(d_total_sum, 0.0, sizeof(float)));
-        block_sum_reduce<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
-        //reduce4<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
+        //block_sum_reduce<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
+        reduce4<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
         CUDA_CHECK(cudaMemcpy(&total_sum, d_total_sum, sizeof(float), cudaMemcpyDeviceToHost));
         CUDA_CHECK(cudaFree(d_total_sum));
     }
@@ -543,16 +543,16 @@ float gpu_sum_reduce(unsigned char* d_in, int d_in_len)
     CUDA_CHECK(cudaMalloc(&d_block_sums, sizeof(float) * grid_sz));
     CUDA_CHECK(cudaMemset(d_block_sums, 0, sizeof(float) * grid_sz));
     // Sum data allocated for each block
-    //reduce4<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
-    block_sum_reduce<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
+    reduce4<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
+    //block_sum_reduce<<<grid_sz, block_sz, sizeof(float) * max_elems_per_block>>>(d_block_sums, d_in, d_in_len);
 
     if (grid_sz <= max_elems_per_block)
     {
         float* d_total_sum;
         CUDA_CHECK(cudaMalloc(&d_total_sum, sizeof(float)));
         CUDA_CHECK(cudaMemset(d_total_sum, 0, sizeof(float)));
-        block_sum_reduce<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
-        //reduce4<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
+        //block_sum_reduce<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
+        reduce4<<<1, block_sz, sizeof(float) * max_elems_per_block>>>(d_total_sum, d_block_sums, grid_sz);
         CUDA_CHECK(cudaMemcpy(&total_sum, d_total_sum, sizeof(float), cudaMemcpyDeviceToHost));
         CUDA_CHECK(cudaFree(d_total_sum));
     }

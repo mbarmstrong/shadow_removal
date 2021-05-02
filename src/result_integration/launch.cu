@@ -7,7 +7,6 @@
 void launch_result_integration(float *rgbImage,unsigned char *erodedShadowMask,unsigned char *erodedLightMask, 
   float *smoothMask,float *finalImage,int imageWidth, int imageHeight) {
   
-  float *redShadowArray;
   float redSumShadowArray;
   float greenSumShadowArray;
   float blueSumShadowArray;

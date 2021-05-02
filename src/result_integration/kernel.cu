@@ -214,8 +214,6 @@ __global__ void multiply_rgbImage_byMask(float *rgbImage, unsigned char *greySha
 
     int col = threadIdx.x + blockIdx.x * blockDim.x; // column index
     int row = threadIdx.y + blockIdx.y * blockDim.y; // row index
-
-    int stride = width*height;
   
     if (col < width && row < height) {  // check boundary condition
         int idx = row * width + col;      // mapping 2D to 1D coordinate
