@@ -36,7 +36,7 @@ void launch_color_convert(float *inputImage_RGB, float *outputImage_Inv,
   	dim3 gridDim(ceil(imageWidth/16.0), ceil(imageHeight/16.0), 1);
   	dim3 blockDim(16, 16, 1);
 	timerLog_startEvent(&timerLog);
-  	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, deviceOutputImageData_Inv, 
+  	color_convert<<<gridDim, blockDim>>>(deviceInputImageData_RGB, 
   										deviceOutputImageData_Gray, deviceOutputImageData_YUV, 
   										imageWidth, imageHeight);
 	timerLog_stopEventAndLog(&timerLog, "Color Conversion", "\0", imageWidth, imageHeight);
