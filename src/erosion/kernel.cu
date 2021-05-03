@@ -69,8 +69,8 @@ __global__ void image_erode_shared(unsigned char* inImage, unsigned char* outIma
     __syncthreads();
 
     if (tx < tile_width && ty < tile_width) {
-        unsigned char value_shadow = 1;
-        unsigned char value_light = 1;
+        float value_shadow = 1;
+        float value_light = 1;
 
         for (int j = 0; j < mask_width; j++) {
             for (int k = 0; k < mask_width; k++) {
