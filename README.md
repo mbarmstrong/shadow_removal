@@ -7,11 +7,11 @@
 
     NOTE: this should be the same place your labs and build_dir are already located
     
-1. clone or unzip the repo here in a folder titled shadow_removal
+2. clone or unzip the repo here in a folder titled shadow_removal
 
     `$ git clone https://github.com/mbarmstrong/shadow_removal.git`
 
-1. navigate to build_dir and clean out everything
+3. navigate to build_dir and clean out everything
 
     `$ cd build_dir`
     
@@ -23,10 +23,16 @@
     
     `$ cd build_dir`
 
-1. run the following commands to build
+4. run the following commands to configure the build in release mode:
 
+    `$ CC=gcc cmake3 ../shadow_removal/`
+    
+    or for debug:
+    
     `$ CC=gcc cmake3 ../shadow_removal/ -DCMAKE_BUILD_TYPE=Debug`
     
+5. compile the executables
+
     `$ make`
  
  
@@ -45,7 +51,7 @@
    
    this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly from the command line.
   
-1. to execute the shadow removal solution:
+4. to execute the shadow removal solution:
 
    `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
    
@@ -105,16 +111,17 @@ here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME d
 
     `$ cd ~`
 
-1. open .bashrc (if not there, create a new one)
+2. open .bashrc (if not there, create a new one)
 
     `$ gedit .bashrc`
 
-1. copy paste code in file and save
+3. copy paste code in file and save
 
-1. source the file
+4. source the file
 
     `$ source .bashrc`
-1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied
+    
+5. you now have all the settings loaded, every time you login from now on these settings will be automatically applied
 
 
 ```
