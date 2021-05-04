@@ -7,7 +7,7 @@
 
     NOTE: this should be the same place your labs and build_dir are already located
     
-1. clone the repo
+1. clone or unzip the repo here
 
     `$ git clone https://github.com/mbarmstrong/shadow_removal.git`
 
@@ -23,6 +23,29 @@
     
     `$ make`
    
+## running the code on an interactive session
+
+1. login to ocelote or elgato
+2. add the isesh function to your .bashrc file from the steps above
+3. launch the session with the folloiwng command
+
+    `qsub -I -N add -W group_list=ece569 -q standard -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:5:00`
+    
+    or if you added the shortcut to your .bashrc
+    
+    `isesh 5`
+   
+   this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly for the command line.
+  
+1. to execute the shadow removal solution:
+
+   `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
+   
+   or launch the shell script in the pbs scripts folder:
+   
+   `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`   
+   
+
 ## usefull bash profile setup
 
 here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME directory. to set this up:
@@ -86,20 +109,3 @@ elif [ "$OS" = "7.9" ]; then
 fi
 ```
 
-## running an interactive session
-
-1. login to ocelote or elgato
-2. add the isesh function to your .bashrc file from the steps above
-3. launch the session with the folloiwng command
-
-    `$ isesh 5`
-   
-   this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly for the command line.
-  
-1. to execute the shadow removal solution:
-
-   `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
-   
-   or launch the shell script in the pbs scripts folder:
-   
-   `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`
