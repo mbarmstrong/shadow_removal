@@ -1,13 +1,13 @@
 # shadow_removal
 
 ## how to build code
-1. login to the hpc as normal and navigate to your $HOME/ece569 directory
+1. login to the hpc as normal and navigate to your $HOME/ece569 directory. 
     
     `$ cd ~/ece569`
 
     NOTE: this should be the same place your labs and build_dir are already located
     
-1. clone or unzip the repo here
+1. clone or unzip the repo here in a folder titled shadow_removal
 
     `$ git clone https://github.com/mbarmstrong/shadow_removal.git`
 
@@ -16,6 +16,12 @@
     `$ cd build_dir`
     
     `$ rm -r *`
+    
+    or if you don't have one yet
+    
+    `$ mkdir build_dir`
+    
+    `$ cd build_dir`
 
 1. run the following commands to build
 
@@ -25,8 +31,8 @@
    
 ## running the code on an interactive session
 
-1. login to ocelote or elgato
-2. add the isesh function to your .bashrc file from the steps above
+1. login to ocelote
+2. (optional) add the isesh function to your .bashrc file from the steps below
 3. launch the session with the folloiwng command
 
     `qsub -I -N add -W group_list=ece569 -q standard -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:5:00`
@@ -44,7 +50,26 @@
    or launch the shell script in the pbs scripts folder:
    
    `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`   
-   
+
+## running a unit test
+
+there are unit tests associated with all of the phases of the shadow removal algoritm. Execute a unit test by running any of the following on an interactive session:
+
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_color_convert.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_convolution.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_erosion.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_otsu_method.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_result_integration.sh`   
+
+## how to view timing output
+
+1. navigate to output direcotry after running the shadow removal solution:
+
+    `$ cd $HOME/ece569/shadow_removal/output`
+    
+2. open kernel kernel_times.csv in your favorite editor. for example:
+
+    `$ gedit kernel_times.csv`
 
 ## usefull bash profile setup
 
