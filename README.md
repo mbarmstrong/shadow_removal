@@ -71,6 +71,7 @@ there are unit tests associated with all of the phases of the shadow removal alg
  `$ $HOME/ece569/shadow_removal/pbs_scripts/run_otsu_method.sh`   
  `$ $HOME/ece569/shadow_removal/pbs_scripts/run_result_integration.sh`   
 
+These unit tests were used to test our code on smaller scale input. There is no standard pass or fail here or specific output files generated.
 
 
 ## how to view timing output
