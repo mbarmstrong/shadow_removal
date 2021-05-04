@@ -1,6 +1,6 @@
 # shadow_removal
 
-## how to build code
+## how to build the code
 1. login to the hpc as normal and navigate to your $HOME/ece569 directory. 
     
     `$ cd ~/ece569`
@@ -63,7 +63,7 @@
 
 ## running a unit test
 
-there are unit tests associated with all of the phases of the shadow removal algoritm. Execute a unit test by running any of the following on an interactive session:
+there are unit tests associated with all of the phases of the shadow removal algoritm. execute a unit test by running any of the following on an interactive session:
 
  `$ $HOME/ece569/shadow_removal/pbs_scripts/run_color_convert.sh`   
  `$ $HOME/ece569/shadow_removal/pbs_scripts/run_convolution.sh`   
@@ -99,7 +99,7 @@ there are unit tests associated with all of the phases of the shadow removal alg
 
     `$ make`
     
-4. run the shadow removal solution based on instructions above. Debug states will now be printed to the screen. In additon .ppm images of intermidiate steps and final image will appear in the output directory `$HOME/ece569/shadow_removal/output`
+4. run the shadow removal solution based on the instructions above. Debug statements will now be printed to the screen. In additon .ppm images of intermidiate steps and final image will appear in the output directory `$HOME/ece569/shadow_removal/output`
 
 
 
