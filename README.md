@@ -1,28 +1,109 @@
 # shadow_removal
 
-## how to build code
-1. login to the hpc as normal and navigate to your $HOME/ece569 directory
+## how to build the code
+1. login to the hpc as normal and navigate to your $HOME/ece569 directory. 
     
     `$ cd ~/ece569`
 
     NOTE: this should be the same place your labs and build_dir are already located
     
-1. clone the repo
+2. clone or unzip the repo here in a folder titled shadow_removal
 
     `$ git clone https://github.com/mbarmstrong/shadow_removal.git`
 
-1. navigate to build_dir and clean out everything
+3. navigate to build_dir and clean out everything
 
     `$ cd build_dir`
     
     `$ rm -r *`
+    
+    or if you don't have one yet
+    
+    `$ mkdir build_dir`
+    
+    `$ cd build_dir`
 
-1. run the following commands to build
+4. run the following commands to configure the build in release mode:
 
+    `$ CC=gcc cmake3 ../shadow_removal/`
+    
+    or for debug:
+    
     `$ CC=gcc cmake3 ../shadow_removal/ -DCMAKE_BUILD_TYPE=Debug`
     
+5. compile the executables
+
     `$ make`
+ 
+ 
+ 
+## running the code on an interactive session
+
+1. login to ocelote
+2. (optional) add the isesh function to your .bashrc file from the steps below
+3. launch the session with the folloiwng command
+
+    `qsub -I -N add -W group_list=ece569 -q standard -l select=1:ncpus=2:mem=12gb:ngpus=1 -l walltime=00:5:00`
+    
+    or if you added the shortcut to your .bashrc
+    
+    `isesh 5`
    
+   this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly from the command line.
+  
+4. to execute the shadow removal solution:
+
+   `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
+   
+   or launch the shell script in the pbs scripts folder:
+   
+   `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`   
+
+
+
+## running a unit test
+
+there are unit tests associated with all of the phases of the shadow removal algoritm. execute a unit test by running any of the following on an interactive session:
+
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_color_convert.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_convolution.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_erosion.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_otsu_method.sh`   
+ `$ $HOME/ece569/shadow_removal/pbs_scripts/run_result_integration.sh`   
+
+These unit tests were used to test our code on smaller scale input. There is no standard pass or fail here or specific output files generated.
+
+
+## how to view timing output
+
+1. navigate to output direcotry after running the shadow removal solution:
+
+    `$ cd $HOME/ece569/shadow_removal/output`
+    
+2. open kernel kernel_times.csv in your favorite editor. for example:
+
+    `$ gedit kernel_times.csv`
+
+## how to debug and view output images
+
+1. open globals.h file
+
+    `$ cd $HOME/ece569/shadow_removal/src/globals.h`
+    
+2. find the PRINT_DEBUG flag and change it to 1
+
+    `#define PRINT_DEBUG 1`
+    
+3. recompile the code
+
+    `$ cd $HOME/ece569/build_dir/`
+
+    `$ make`
+    
+4. run the shadow removal solution based on the instructions above. Debug statements will now be printed to the screen. In additon .ppm images of intermidiate steps and final image will appear in the output directory `$HOME/ece569/shadow_removal/output`
+
+
+
 ## usefull bash profile setup
 
 here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME directory. to set this up:
@@ -31,16 +112,17 @@ here is Coale's .bashrc file, your equivalent .bashrc is located in your $HOME d
 
     `$ cd ~`
 
-1. open .bashrc (if not there, create a new one)
+2. open .bashrc (if not there, create a new one)
 
     `$ gedit .bashrc`
 
-1. copy paste code in file and save
+3. copy paste code in file and save
 
-1. source the file
+4. source the file
 
     `$ source .bashrc`
-1. you now have all the settings loaded, every time you login from now on these settings will be automatically applied
+    
+5. you now have all the settings loaded, every time you login from now on these settings will be automatically applied
 
 
 ```
@@ -86,20 +168,3 @@ elif [ "$OS" = "7.9" ]; then
 fi
 ```
 
-## running an interactive session
-
-1. login to ocelote or elgato
-2. add the isesh function to your .bashrc file from the steps above
-3. launch the session with the folloiwng command
-
-    `$ isesh 5`
-   
-   this will connect with a node on the hpc for 5 min (you can specify however many minutes you'd like) and now you can launch executables with GPU kernels directly for the command line.
-  
-1. to execute the shadow removal solution:
-
-   `$ $HOME/ece569/build_dir/ShadowRemoval_Solution -i <path_to_image> -t image`
-   
-   or launch the shell script in the pbs scripts folder:
-   
-   `$ $HOME/ece569/shadow_removal/pbs_scripts/run_shadow_removal.sh`
