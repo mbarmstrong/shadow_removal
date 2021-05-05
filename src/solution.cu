@@ -14,6 +14,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
 
   int imageSize = imageWidth * imageHeight;
 
+  // setup end to end timer
   cudaEvent_t astartEvent, astopEvent;
   float aelapsedTime;
   cudaEventCreate(&astartEvent);
@@ -33,7 +34,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
   grayImage = (unsigned char *)malloc(imageSize * 1 * sizeof(unsigned char));
   yuvImage =  (unsigned char *)malloc(imageSize * NUM_CHANNELS * sizeof(unsigned char));
 
-  // execute color convert to get grey and yuv images, note this transposes the output images in memory
+  // execute color convert to get grey and yuv images, note this transposes the output yuv image in memory
   // so all channels store their pixels sequentially, for example all the y pixels followed by all the
   // u pixels then folled by all the v pixels for the yuv image
   launch_color_convert(rgbImage, invImage, grayImage, yuvImage, imageWidth, imageHeight, imageSize, "convert");
@@ -44,42 +45,49 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
   //--------------------------------------------------
   unsigned char *grayMask;
   unsigned char *yuvMask;
-  unsigned char *u = yuvImage + 1*imageSize;
+  unsigned char *u = yuvImage + 1*imageSize; //get second channel yuv image
   float level_gray = 0.0;
   float level_u = 0.0;
 
+  // allocate host memory for gray and yuv masks
   grayMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   yuvMask = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
+  // calculate gray threshold and binarize to get the gray mask using gpu kernels
   level_gray = launch_otsu_method(grayImage, imageWidth, imageHeight, "gray");
   launch_image_binarization(grayImage, grayMask, level_gray, imageWidth, imageHeight, true, "gray");
 
+  // calculate u threshold and binarize to get the yuv mask using gpu kernels
   level_u = launch_otsu_method(u, imageWidth, imageHeight, "yuv");
   launch_image_binarization(u, yuvMask, level_u, imageWidth, imageHeight, false, "yuv");
 
 
   //--------------------------------------------------
-  // execute erosion
+  // execute erosion using gray mask
   //
   //--------------------------------------------------
   unsigned char *erodedShadow;
   unsigned char *erodedLight;
   int maskWidth = 5;
 
+  // allocate host memory for eroded shadow mask and eroded light mask
   erodedShadow = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
   erodedLight = (unsigned char *)malloc(imageSize * sizeof(unsigned char));
 
+  // launch erosion kernels
   launch_erosion(grayMask, erodedShadow, erodedLight, maskWidth, imageWidth, imageHeight);
 
 
   //--------------------------------------------------
-  // execute convolution
+  // execute convolution using yuv mask
   //
   //--------------------------------------------------
   float *smoothMask;
 
+  // allocate host memory for smooth mask
   smoothMask = (float *)malloc(imageSize * sizeof(float));
 
+  // launch convolution kernels
   launch_convolution(yuvMask, smoothMask, maskWidth, imageWidth, imageHeight);
 
 
@@ -90,6 +98,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
   //--------------------------------------------------
   float *finalImage;
 
+  // allocate memory for final image
   finalImage = (float *)malloc(imageSize * NUM_CHANNELS * sizeof(float));
 
   launch_result_integration(rgbImage,erodedShadow,erodedLight,smoothMask,finalImage,imageWidth,imageHeight);
@@ -98,6 +107,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
   cudaEventSynchronize(astopEvent);
   cudaEventElapsedTime(&aelapsedTime, astartEvent, astopEvent);
 
+  // debug prints for verifying each step
   #if PRINT_DEBUG
 
     int debugPixelRow = 0;
@@ -136,6 +146,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
 
     char *output_file_name;
 
+    // write images for each step of the shadow removal process
     output_file_name = wbPath_join(outDir, "input.ppm");
     write_image(output_file_name,rgbImage,imageWidth,imageHeight,NUM_CHANNELS);
 
@@ -167,6 +178,7 @@ void execute_shadow_removal(float *rgbImage, int imageWidth, int imageHeight, ch
 
   printf("Done! Total Execution Time (ms):\t%f\n\n",aelapsedTime);
  
+  // cleanup host mem
   free(invImage);
   free(grayImage);
   free(yuvImage);
@@ -204,11 +216,14 @@ int main(int argc, char *argv[]) {
 
   int inputFileCount = wbArg_getInputCount(args);
 
+  // loop through all the input files and run the shadow removal algorithm 
   for(int i = 0; i < inputFileCount; i++) {
+
+    // read image
     inputImageFile = wbArg_getInputFile(args, i);
     inputImage_RGB = wbImport(inputImageFile);
 
-    //outputImageFile = wbArg_getOutputFile(args);
+    // load image from inputs and get data
     imageWidth = wbImage_getWidth(inputImage_RGB);
     imageHeight = wbImage_getHeight(inputImage_RGB);
 
@@ -217,10 +232,11 @@ int main(int argc, char *argv[]) {
     printf("\nRunning shadow removal on image of %dx%d... ",
           imageWidth, imageHeight, NUM_CHANNELS);
 
+    // call shadow removal on inital rgb image
     execute_shadow_removal(rgbImage, imageWidth, imageHeight, outputDir);
   }
 
-  timerLog_save(&timerLog);
+  timerLog_save(&timerLog); //save kernel times to output file
 
   wbImage_delete(inputImage_RGB);
   
