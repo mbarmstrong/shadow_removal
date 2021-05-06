@@ -61,7 +61,7 @@ __global__ void omega_scan(unsigned int *histo, float *omega, unsigned int num_e
       
 }
 
-// kernel 3: performs scan to obtain μ(k), the first-order cumulative moment
+// kernel 3: obtain μ(k), the first-order cumulative moment
 // assume number of bins is less than or equal two the total number of threads in a block
 __global__ void mu(unsigned int *histo, float *mu, unsigned int num_elements) {
     
@@ -85,6 +85,8 @@ __global__ void mu(unsigned int *histo, float *mu, unsigned int num_elements) {
 
 }
 
+// kernel 3: performs scan to obtain μ(k), the first-order cumulative moment
+// assume number of bins is less than or equal two the total number of threads in a block
 __global__ void mu_scan(unsigned int *histo, float *mu, unsigned int num_elements) {
 
 	__shared__ float prob[NUM_BINS]; // probability function for each value
@@ -144,6 +146,7 @@ __global__ void calculate_threshold(float *sigmaBsq, float *level) {
 
 }
 
+// serial cpu function to compute threashold
 float calculate_threshold_cpu(float *sigmaBsq) {
 
   float maxSigmaBsq = 0.0;

@@ -13,29 +13,7 @@
 
 #include "../globals.h"
 
-template<typename T>
- struct greater_127
- {
-   typedef T argument_type;
- 
-   typedef bool result_type;
- 
-   __thrust_exec_check_disable__
-   __host__ __device__ bool operator()(const T &lhs) const {return lhs > 127;}
- }; // end greater_127
-
-template<typename T>
- struct set_equal_127
- {
-   typedef T argument_type;
- 
-   typedef T result_type;
- 
-   __thrust_exec_check_disable__
-   __host__ __device__ T operator()(const T &x) const {return 127;}
- }; // end set_equal_127
-
-
+// sort and reduce by key histogram generation
 void histo_thrust(unsigned char * hostInput, int imageWidth, int imageHeight, const char* imageid) {
 
     unsigned int *binwidths;
@@ -63,10 +41,6 @@ void histo_thrust(unsigned char * hostInput, int imageWidth, int imageHeight, co
     thrust::adjacent_difference(thrust::device,
                                 bins_thrust.begin(), bins_thrust.end(),
                                 bins_thrust.begin());
-
-    set_equal_127<unsigned int>op;
-    greater_127<unsigned int>pred;
-    thrust::transform_if(bins_thrust.begin(), bins_thrust.end(), bins_thrust.begin(), op, pred);
 
     timerLog_stopEventAndLog(&timerLog, "sort and reduce by key", imageid, imageWidth, imageHeight);
 

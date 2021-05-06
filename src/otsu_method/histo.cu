@@ -143,7 +143,7 @@ __global__ void histogram_shared_accumulate_kernel(unsigned char *input, unsigne
   }
 }
 
-// version 3
+// R shared per block histogram
 __global__ void histogram_shared_R_kernel(unsigned char *data, unsigned int *histo,
                                  unsigned int size, unsigned int R) {
 
@@ -153,16 +153,20 @@ __global__ void histogram_shared_R_kernel(unsigned char *data, unsigned int *his
     const int lane = threadIdx.x % WARP_SIZE;
     const int warps_block = blockDim.x / WARP_SIZE;
 
+    //calulate which R histogram to write to in shared memroy
     const int off_rep = (NUM_BINS + 1) * (threadIdx.x % R);
 
+    // compute how many pixels to load from global memory
     const int begin = (size / warps_block) * warpid + WARP_SIZE * blockIdx.x + lane;
     const int end = (size / warps_block) * (warpid + 1);
     const int step = WARP_SIZE * gridDim.x;
 
+    //initilze shared memory
     for(int pos = threadIdx.x; pos < (NUM_BINS + 1) * R; pos += blockDim.x) Hs[pos] = 0;
 
     __syncthreads();
 
+    //bin the values
     for(int i = begin; i < end; i += step){
         unsigned int d = data[i];
 
@@ -171,6 +175,7 @@ __global__ void histogram_shared_R_kernel(unsigned char *data, unsigned int *his
 
     __syncthreads();
 
+    //write all the shared memory back to single global histogram
     for(int pos = threadIdx.x; pos < NUM_BINS; pos += blockDim.x){
       unsigned int sum = 0;
       for(int base = 0; base < (NUM_BINS +1) * R; base += NUM_BINS +1){
@@ -181,7 +186,7 @@ __global__ void histogram_shared_R_kernel(unsigned char *data, unsigned int *his
 
 }
 
-// version 3
+// R shared per block histogram with no shared mem padding
 __global__ void histogram_shared_R_nopad_kernel(unsigned char *data, unsigned int *histo,
                                  unsigned int size, unsigned int R) {
 
@@ -191,16 +196,20 @@ __global__ void histogram_shared_R_nopad_kernel(unsigned char *data, unsigned in
     const int lane = threadIdx.x % WARP_SIZE;
     const int warps_block = blockDim.x / WARP_SIZE;
 
+    //calulate which R histogram to write to in shared memroy
     const int off_rep = (NUM_BINS) * (threadIdx.x % R);
 
+    // compute how many pixels to load from global memory
     const int begin = (size / warps_block) * warpid + WARP_SIZE * blockIdx.x + lane;
     const int end = (size / warps_block) * (warpid + 1);
     const int step = WARP_SIZE * gridDim.x;
 
+    //initilze shared memory
     for(int pos = threadIdx.x; pos < (NUM_BINS) * R; pos += blockDim.x) Hs[pos] = 0;
 
     __syncthreads();
 
+    //bin the values
     for(int i = begin; i < end; i += step){
         unsigned int d = data[i];
 
@@ -209,6 +218,7 @@ __global__ void histogram_shared_R_nopad_kernel(unsigned char *data, unsigned in
 
     __syncthreads();
 
+    //write all the shared memory back to single global histogram
     for(int pos = threadIdx.x; pos < NUM_BINS; pos += blockDim.x){
       unsigned int sum = 0;
       for(int base = 0; base < (NUM_BINS) * R; base += NUM_BINS){
